@@ -29,54 +29,37 @@ if os.path.exists(outputPath+'distritos.shp') == False:
     caop = geopandas.read_file('caop.shp', encoding='utf-8')
     # Executing dissolve from parishes to districts
     districts = caop.dissolve(by = 'Distrito')
+    print(type(districts))
     # Saving dissolve output as shapefile
     districts.to_file(outputPath+'distritos.shp', encoding='utf-8')
+    districts = geopandas.read_file(outputPath+'distritos.shp', encoding='utf-8')
+    # # districts = districts.to_crs(3763)
 else:
     print('found distritos.shp')
     # Reading distritos shapefile that already exists
     districts = geopandas.read_file(outputPath+'distritos.shp', encoding='utf-8')
+    # # districts = districts.to_crs(3763)
 
-# # Working on districts centroids
-# if os.path.exists(outputPath+'centroides.shp') == False:
-#     print('centroides.shp not found. Let\'s work on it.')
-#     # Extracting distric centroids to aquire forecast coordinates
-#     centroids = districts.centroid
-#     # Saving centroides output as shapefile
-#     centroids.to_file(outputPath+'centroides.shp', encoding='utf-8')
-# else:
-#     print('found centroides.shp')
-#     # Reading distritos shapefile that already exists
-#     centroids = geopandas.read_file(outputPath+'centroides.shp', encoding='utf-8')
-#     centroids = districts.centroid
+# print(districts)
 
-centroides = districts.centroid
-centroides.to_file(outputPath+'centroides.shp', encoding='utf-8')
-
-print(type(centroides))
-
-coordDicX = centroides.geometry.x.to_dict()
-coordDicY = centroides.y.to_dict()
-
-print(coordDicX)
-
-# Converting separate coordinate dictionaries (x, y) to a actually usable dictionary
-def getCoordTogether(dicX, dicY):
+def getCoordTogether(geoDataFrame):
     '''
     Extração de coordenadas geográficas úteis ao harvest de dados meteorológicos.
     Devolve um dicionário onde as chaves são os distritos, à qual está associado
     um tuplo com as coordenadas Lat Long.
     '''
-    coord = [dicX, dicY]
+    pre = districts.set_index('Distrito')
+    coordDicX = pre.geometry.centroid.x.to_dict()
+    coordDicY = pre.geometry.centroid.y.to_dict()
+    coord = [coordDicX, coordDicY]
     coordDic = {}
-    for i in dicX.keys():
+    for i in coordDicX.keys():
         coordDic[i] = tuple(coordDic[i] for coordDic in coord)
     return coordDic
 
-coord = getCoordTogether(coordDicX, coordDicY)
+coord = getCoordTogether(districts)
 
-# cagar nisto e ver https://gis.stackexchange.com/questions/166820/geopandas-return-lat-and-long-of-a-centroid-point
-
-# print(coord)
+print(coord)
 
 # # Check the existence of districts table in meteo PG database
 # pgPassword = open(os.path.join('pw.txt'), 'r').readline()
