@@ -40,7 +40,7 @@ centroides.to_file('centroides.shp', encoding='utf-8')
 coordX = centroides.x.to_dict()
 coordY = centroides.y.to_dict()
 
-# Converting separate coordinate dictionaries (x, y) to a actualy usable dictionary
+# Converting separate coordinate dictionaries (x, y) to a actually usable dictionary
 def getCoordTogether(dicX, dicY):
     '''
     Extração de coordenadas geográficas úteis ao harvest de dados meteorológicos.
@@ -55,3 +55,8 @@ def getCoordTogether(dicX, dicY):
 
 coord = getCoordTogether(coordX, coordY)
 
+# Check the existence of districts table in meteo PG database
+pgPassword = open(os.path.join('pw.txt'), 'r').readline()
+pgPassword = str(password)
+
+con = psycopg2.connect(dbname='meteo', user='postgres', password=password, host='localhost', port='5432')
