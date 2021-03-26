@@ -20,10 +20,11 @@ def deleteAndCreateOutput():
 # deleteAndCreateOutput()
 
 
-print('Working on initial steps... Please, wait a moment')
+print('Working on initial steps... Please, wait a moment.')
 
+# Working on districts
 if os.path.exists(outputPath+'distritos.shp') == False:
-    print('distritos.shp not found')
+    print('distritos.shp not found. Let\'s work on it.')
     # Reading main CAOP shapefile (it needs to already exist)
     caop = geopandas.read_file('caop.shp', encoding='utf-8')
     # Executing dissolve from parishes to districts
@@ -35,20 +36,23 @@ else:
     # Reading distritos shapefile that already exists
     districts = geopandas.read_file(outputPath+'distritos.shp', encoding='utf-8')
 
-# if os.path.exists('\\output\\centroides.shp') == False:
-#     print('centroides.shp not found')
-#     # Extracting distric centroids to aquire forecast coordinates
-#     centroids = districts.centroid
-#     # Saving centroides output as shapefile
-#     centroids.to_file(outputPath+'centroides.shp', encoding='utf-8')
-# else:
-#     print('found centroides.shp')
-#     # Reading distritos shapefile that already exists
-#     centroids = geopandas.read_file('\\output\\centroides.shp', encoding='utf-8')
+# Working on districts centroids
+if os.path.exists(outputPath+'centroides.shp') == False:
+    print('centroides.shp not found. Let\'s work on it.')
+    # Extracting distric centroids to aquire forecast coordinates
+    centroids = districts.centroid
+    # Saving centroides output as shapefile
+    centroids.to_file(outputPath+'centroides.shp', encoding='utf-8')
+else:
+    print('found centroides.shp')
+    # Reading distritos shapefile that already exists
+    centroids = geopandas.read_file(outputPath+'centroides.shp', encoding='utf-8')
 
-# # Structuring coordinates into two dictionaries {'district':'x or y coordinate'}
-# coordX = centroids.x.to_dict()
-# coordY = centroids.y.to_dict()
+type(centroids)
+
+# Structuring coordinates into two dictionaries {'district':'x or y coordinate'}
+coordX = centroids.geometry.x.to_dict()
+coordY = centroids.geometry.y.to_dict()
 
 # Converting separate coordinate dictionaries (x, y) to a actually usable dictionary
 def getCoordTogether(dicX, dicY):
@@ -63,9 +67,9 @@ def getCoordTogether(dicX, dicY):
         coordDic[i] = tuple(coordDic[i] for coordDic in coord)
     return coordDic
 
-# coord = getCoordTogether(coordX, coordY)
+coord = getCoordTogether(coordX, coordY)
 
-# print(coord)
+print(coord)
 
 # # Check the existence of districts table in meteo PG database
 # pgPassword = open(os.path.join('pw.txt'), 'r').readline()
