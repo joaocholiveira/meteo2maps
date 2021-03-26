@@ -1,4 +1,4 @@
-import os, urllib.request, json, subprocess, geopandas, pandas,\
+import os, sys, urllib.request, json, subprocess, geopandas, pandas,\
 shutil, psycopg2, re, requests, time, warnings
 from datetime import datetime
 from psycopg2 import extras as psy2extras
@@ -66,7 +66,7 @@ print('\n4 - District coordinates compiled.')
 
 
 # Check the existence of districts table in meteo PG database
-# Reading ocult password from txt file in dir
+# Reading hidden password from txt file in dir
 pgPassword = open(os.path.join('pw.txt'), 'r').readline()
 pgPassword = str(pgPassword)
 
@@ -98,19 +98,33 @@ else:
     print('\n5 - Districts table already exists in meteo database.')
 
 
+# Reading hidden Open Weather Map API key from txt file in dir
+apiKey = open(os.path.join('apikey.txt'), 'r').readline()
+apiKey = str(apiKey)
+
 # Meteo request to API
-def requestOWM():
+def requestOWM(coordDic, apiKey):
     '''
     Função para recolha dos dados meteorológicos provenientes da OpenWeather One Call API.
     Exige ao utilizador a introduçaõ interativa do tipo de pedido de mapa meteorológico.
     Devolve uma dataframe (pandas) das váriáveis meteorológicas por distrito para o momento indicado.
     '''
-    requestType = input('\n6 - Specify the wanted type of meteomap request [Y for yesterday, N for now, T for tomorrow]:' )
+    while True:
+        requestType = input('\n6 - Specify the wanted type of meteomap request [Y for yesterday, N for now, T for tomorrow]:' )
+        if not re.match('[YNT]', requestType):
+            if requestType == 'exit':
+                sys.exit()
+            else:
+                print('Please, limit your input to Y OR N OR T or exit with \'exit\'.')
+                time.sleep(2)
+        else:
+            break
     if requestType == 'Y':
-        
-    elif requestType == 'N':
+        print('Foi Y sim senhor')
+    else:
+        print('tambem serve')
+    # elif requestType == 'N':
 
-    elif requestType == 'T':
-        print('bela shit')
+    # elif requestType == 'T':
 
-requestOWM()
+requestOWM(coord, apiKey)
