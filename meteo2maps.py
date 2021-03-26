@@ -76,7 +76,18 @@ def checkPgTable(connectionParameters, table):
     Devolve True se existir; False se não existir.
     '''
     cur = connectionParameters.cursor()
-    cur.execute("select * from information_schema.tables where table_name=%s", (table,))  
+    cur.execute("select * from information_schema.tables where table_name=%s", (table,))
     return(bool(cur.rowcount))
 
-print(checkPgTable(conn, 'distritos'))
+# print(checkPgTable(conn, 'outra coisa'))
+
+if checkPgTable(conn, 'distritos') == False:
+    # Loading table to meteo databaase
+    command = ["C:\\OSGeo4W64\\bin\\ogr2ogr.exe",
+          "-f", "PostgreSQL",
+          "PG:host=localhost user=postgres dbname=meteo password=3763", outputPath,
+          "-lco", "GEOMETRY_NAME=the_geom", "-lco", "FID=gid", "-lco",
+          "PRECISION=no", "-nlt", "PROMOTE_TO_MULTI", "-nln", "distritos", "-overwrite"]
+    subprocess.check_call(command)
+else:
+    print('já lá tava oh nabo')
