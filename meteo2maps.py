@@ -62,18 +62,21 @@ coord = getCoordTogether(districts)
 
 
 # Check the existence of districts table in meteo PG database
+# Reading ocult password from txt file in dir
 pgPassword = open(os.path.join('pw.txt'), 'r').readline()
 pgPassword = str(pgPassword)
 
+# Defining PostgreSQL connection parameters
 conn = psycopg2.connect(dbname='meteo', user='postgres', password=pgPassword,\
 host='localhost', port='5432')
 
 def checkPgTable(connectionParameters, table):
     '''
+    Função para verificação de presença/ausência de tabela dentro de BD PostgreSQL.
+    Devolve True se existir; False se não existir.
     '''
     cur = connectionParameters.cursor()
-    cur.execute('SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE\
-    table_catalog=\'meteo\' AND table_schema=\'public\' AND table_name=\'{}\');'.format(table))
+    cur.execute("select * from information_schema.tables where table_name=%s", (table,))  
     return(bool(cur.rowcount))
 
-print(checkPgTable(conn, 'centroides'))
+print(checkPgTable(conn, 'distritos'))
