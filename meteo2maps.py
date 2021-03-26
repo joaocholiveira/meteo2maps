@@ -29,8 +29,7 @@ if os.path.exists(outputPath+'distritos.shp') == False:
     caop = geopandas.read_file('caop.shp', encoding='utf-8')
     # Executing dissolve from parishes to districts
     districts = caop.dissolve(by = 'Distrito')
-    print(type(districts))
-    # Saving dissolve output as shapefile
+    # Saving dissolve output as shapefile and reading it
     districts.to_file(outputPath+'distritos.shp', encoding='utf-8')
     districts = geopandas.read_file(outputPath+'distritos.shp', encoding='utf-8')
     # # districts = districts.to_crs(3763)
@@ -39,8 +38,6 @@ else:
     # Reading distritos shapefile that already exists
     districts = geopandas.read_file(outputPath+'distritos.shp', encoding='utf-8')
     # # districts = districts.to_crs(3763)
-
-# print(districts)
 
 def getCoordTogether(geoDataFrame):
     '''
@@ -60,6 +57,7 @@ def getCoordTogether(geoDataFrame):
 coord = getCoordTogether(districts)
 
 print(coord)
+print(districts)
 
 # # Check the existence of districts table in meteo PG database
 # pgPassword = open(os.path.join('pw.txt'), 'r').readline()
