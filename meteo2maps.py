@@ -1,9 +1,11 @@
 import os, urllib.request, json, subprocess, geopandas, pandas,\
-shutil, psycopg2, re, requests, time
+shutil, psycopg2, re, requests, time, warnings
 from datetime import datetime
 from psycopg2 import extras as psy2extras
 from geo.Geoserver import Geoserver
 
+# To disable geopandas CRS warnings in terminal
+warnings.filterwarnings('ignore')
 
 os.environ['SHAPE_ENCODING'] = "utf-8"
 basePath = 'C:\\saprog\\projeto'
@@ -56,12 +58,22 @@ def getCoordTogether(geoDataFrame):
 
 coord = getCoordTogether(districts)
 
-print(coord)
-print(districts)
+# print(coord)
 
-# # Check the existence of districts table in meteo PG database
-# pgPassword = open(os.path.join('pw.txt'), 'r').readline()
-# pgPassword = str(password)
 
-# con = psycopg2.connect(dbname='meteo', user='postgres', password=password,\
-# host='localhost', port='5432')
+# Check the existence of districts table in meteo PG database
+pgPassword = open(os.path.join('pw.txt'), 'r').readline()
+pgPassword = str(pgPassword)
+
+conn = psycopg2.connect(dbname='meteo', user='postgres', password=pgPassword,\
+host='localhost', port='5432')
+
+def checkPgTable(connectionParameters, table):
+    '''
+    '''
+    cur = connectionParameters.cursor()
+    cur.execute('SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE\
+    table_catalog=\'meteo\' AND table_schema=\'public\' AND table_name=\'{}\');'.format(table))
+    return(bool(cur.rowcount))
+
+print(checkPgTable(conn, 'centroides'))
