@@ -25,26 +25,26 @@ def deleteAndCreateOutput():
 print('Working on initial steps... Please, wait a moment.')
 
 # Working on districts
-if os.path.exists(outputPath+'distritos.shp') == False:
-    print('distritos.shp not found. Let\'s work on it.')
+if os.path.exists(outputPath+'districts.shp') == False:
+    print('districts.shp not found. Let\'s work on it.')
     # Reading main CAOP shapefile (it needs to already exist)
     caop = geopandas.read_file('caop.shp', encoding='utf-8')
     # Executing dissolve from parishes to districts
     districts = caop.dissolve(by = 'Distrito')
     # Saving dissolve output as shapefile and reading it
-    districts.to_file(outputPath+'distritos.shp', encoding='utf-8')
-    districts = geopandas.read_file(outputPath+'distritos.shp', encoding='utf-8')
+    districts.to_file(outputPath+'districts.shp', encoding='utf-8')
+    districts = geopandas.read_file(outputPath+'districts.shp', encoding='utf-8')
     # # districts = districts.to_crs(3763)
 else:
-    print('found distritos.shp')
-    # Reading distritos shapefile that already exists
-    districts = geopandas.read_file(outputPath+'distritos.shp', encoding='utf-8')
+    print('Found districts.shp')
+    # Reading districts shapefile that already exists
+    districts = geopandas.read_file(outputPath+'districts.shp', encoding='utf-8')
     # # districts = districts.to_crs(3763)
 
 def getCoordTogether(geoDataFrame):
     '''
     Extração de coordenadas geográficas úteis ao harvest de dados meteorológicos.
-    Devolve um dicionário onde as chaves são os distritos, à qual está associado
+    Devolve um dicionário onde as chaves são os districts, à qual está associado
     um tuplo com as coordenadas Lat Long.
     '''
     pre = districts.set_index('Distrito')
@@ -57,6 +57,7 @@ def getCoordTogether(geoDataFrame):
     return coordDic
 
 coord = getCoordTogether(districts)
+print('District coordinates compiled.')
 
 # print(coord)
 
@@ -81,13 +82,15 @@ def checkPgTable(connectionParameters, table):
 
 # print(checkPgTable(conn, 'outra coisa'))
 
-if checkPgTable(conn, 'distritos') == False:
+if checkPgTable(conn, 'districts') == False:
     # Loading table to meteo databaase
     command = ["C:\\OSGeo4W64\\bin\\ogr2ogr.exe",
           "-f", "PostgreSQL",
           "PG:host=localhost user=postgres dbname=meteo password=3763", outputPath,
           "-lco", "GEOMETRY_NAME=the_geom", "-lco", "FID=gid", "-lco",
-          "PRECISION=no", "-nlt", "PROMOTE_TO_MULTI", "-nln", "distritos", "-overwrite"]
+          "PRECISION=no", "-nlt", "PROMOTE_TO_MULTI", "-nln", "districts", "-overwrite"]
     subprocess.check_call(command)
+    print('Districts table loaded into meteo database.')
 else:
-    print('já lá tava oh nabo')
+    print('Districts table already exists in meteo database')
+
