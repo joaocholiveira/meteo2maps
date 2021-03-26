@@ -48,23 +48,7 @@ else:
     # Reading distritos shapefile that already exists
     centroids = geopandas.read_file(outputPath+'centroides.shp', encoding='utf-8')
 
-# Structuring coordinates into two dictionaries {'district':'x or y coordinate'}
-coordX = centroids.geometry.x.to_dict()
-coordY = centroids.geometry.y.to_dict()
-
-# # Converting separate coordinate dictionaries (x, y) to a actually usable dictionary
-# def getCoordTogether(dicX, dicY):
-#     '''
-#     Extração de coordenadas geográficas úteis ao harvest de dados meteorológicos.
-#     Devolve um dicionário onde as chaves são os distritos, à qual está associado
-#     um tuplo com as coordenadas Lat Long.
-#     '''
-#     coord = [dicX, dicY]
-#     coordDic = {}
-#     for i in dicX.keys():
-#         coordDic[i] = tuple(coordDic[i] for coordDic in coord)
-#     return coordDic
-
+# Converting separate coordinate dictionaries (x, y) to a actually usable dictionary
 def getCoordTogether(gdf):
     '''
     Extração de coordenadas geográficas úteis ao harvest de dados meteorológicos.
