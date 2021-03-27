@@ -1,6 +1,6 @@
 import os, sys, urllib.request, json, subprocess, geopandas, pandas,\
 shutil, psycopg2, re, requests, time, warnings
-from datetime import datetime
+from datetime import datetime, timedelta
 from psycopg2 import extras as psy2extras
 from geo.Geoserver import Geoserver
 
@@ -98,7 +98,7 @@ else:
     print('\n5 - Districts table already exists in meteo database.')
 
 
-# Reading hidden Open Weather Map API key from txt file in dir
+# Reading hidden Open Weather Map API key from txt file
 apiKey = open(os.path.join('apikey.txt'), 'r').readline()
 apiKey = str(apiKey)
 
@@ -109,22 +109,37 @@ def requestOWM(coordDic, apiKey):
     Exige ao utilizador a introduçaõ interativa do tipo de pedido de mapa meteorológico.
     Devolve uma dataframe (pandas) das váriáveis meteorológicas por distrito para o momento indicado.
     '''
+    # Requesting input
     while True:
         requestType = input('\n6 - Specify the wanted type of meteomap request [Y for yesterday, N for now, T for tomorrow]:' )
         if not re.match('[YNT]', requestType):
-            if requestType == 'exit':
+            if requestType == 'EXIT':
                 sys.exit()
             else:
-                print('Please, limit your input to Y OR N OR T or exit with \'exit\'.')
+                print('Please, limit your input to Y or N or T or exit with \'EXIT\'.')
                 time.sleep(2)
         else:
             break
-    if requestType == 'Y':
-        print('Foi Y sim senhor')
-    else:
-        print('tambem serve')
-    # elif requestType == 'N':
-
-    # elif requestType == 'T':
+    # Dealing with user request
+    forecast = []
+    for item in coord.items():
+        lat = str(item[1][1])
+        long = str(item[1][0])
+        if requestType == 'Y':
+            yesterday = datetime.now() - timedelta(days=1)
+            unixTimestamp = int(yesterday.timestamp())
+            url = 'https://api.openweathermap.org/data/2.5/onecall/timemachine?lat={}&lon={}&dt={}&appid={}&units=metric'\
+            .format(lat, long, unixTimestamp, apiKey)
+        elif requestType == 'N':
+            url = 'https://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&exclude=minutely,hourly,daily,alerts&appid={}&units=metric'\
+            .format(lat, long, apiKey)
+        elif requestType == 'T':
+            url = 'https://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&exclude=current,minutly,hourly,alerts&appid={}&units=metric'\
+            .format(lat, long, apiKey)
+        with urllib.request.urlopen(url) as url:
+            data = json.loads(url.read().decode())
+            districtForecast = {}
+            districtForecast['distrito'] = item[0]
+            print(districtForecast)
 
 requestOWM(coord, apiKey)
