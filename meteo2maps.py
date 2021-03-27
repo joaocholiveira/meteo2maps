@@ -133,13 +133,28 @@ def requestOWM(coordDic, apiKey):
         elif requestType == 'N':
             url = 'https://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&exclude=minutely,hourly,daily,alerts&appid={}&units=metric'\
             .format(lat, long, apiKey)
+            with urllib.request.urlopen(url) as url:
+                data = json.loads(url.read().decode())
+                districtForecast = {}
+                districtForecast['distrito'] = item[0]
+                districtForecast['forecast_date'] = datetime.utcfromtimestamp(data.get('current').get('dt')).strftime('%d-%m-%Y')
+                districtForecast['forecast_time'] = datetime.utcfromtimestamp(data.get('current').get('dt')).strftime('%H:%M:%S')
+                main = data.get('current').get('weather')
+                for item in main:
+                    districtForecast['weather_desc'] = item.get('main')
+                districtForecast['temperature'] = data.get('current').get('temp')
+                districtForecast['feels_like'] = data.get('current').get('feels_like')
+                districtForecast['pressure'] = data.get('current').get('pressure')
+                districtForecast['humidity'] = data.get('current').get('humidity')
+                districtForecast['dew_point'] = data.get('current').get('dew_point')
+                districtForecast['ultrav_index'] = data.get('current').get('uvi')
+                districtForecast['wind_speed'] = data.get('current').get('wind_speed')
+                districtForecast['wind_deg'] = data.get('current').get('wind_deg')
+                forecast.append(districtForecast)
         elif requestType == 'T':
             url = 'https://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&exclude=current,minutly,hourly,alerts&appid={}&units=metric'\
             .format(lat, long, apiKey)
-        with urllib.request.urlopen(url) as url:
-            data = json.loads(url.read().decode())
-            districtForecast = {}
-            districtForecast['distrito'] = item[0]
-            print(districtForecast)
+    forecast_df = pandas.DataFrame(forecast)
+    return forecast_df
 
-requestOWM(coord, apiKey)
+print(requestOWM(coord, apiKey))
