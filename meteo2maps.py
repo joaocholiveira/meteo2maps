@@ -130,6 +130,7 @@ def requestOWM(coordDic, apiKey):
             unixTimestamp = int(yesterday.timestamp())
             url = 'https://api.openweathermap.org/data/2.5/onecall/timemachine?lat={}&lon={}&dt={}&appid={}&units=metric'\
             .format(lat, long, unixTimestamp, apiKey)
+
         elif requestType == 'N':
             url = 'https://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&exclude=minutely,hourly,daily,alerts&appid={}&units=metric'\
             .format(lat, long, apiKey)
@@ -154,7 +155,11 @@ def requestOWM(coordDic, apiKey):
         elif requestType == 'T':
             url = 'https://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&exclude=current,minutly,hourly,alerts&appid={}&units=metric'\
             .format(lat, long, apiKey)
-    forecast_df = pandas.DataFrame(forecast)
-    return forecast_df
+            with urllib.request.urlopen(url) as url:
+                data = json.loads(url.read().decode())
+                districtForecast = {}
+            print(data) #chama 18x!! estrutura para 1 localização em: https://api.openweathermap.org/data/2.5/onecall?lat=33.441792&lon=-94.037689&exclude=current,minutly,hourly,alerts&appid=44cfad7f82ec61d3f420de3201b703d4
+    # forecast_df = pandas.DataFrame(forecast)
+    # return forecast_df
 
 print(requestOWM(coord, apiKey))
