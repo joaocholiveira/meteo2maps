@@ -6,6 +6,9 @@ from geo.Geoserver import Geoserver
 
 # camelCase style adopted
 
+# Execution time (start)
+start_time = time.time()
+
 # To disable geopandas CRS warnings in terminal
 warnings.filterwarnings('ignore')
 
@@ -19,7 +22,7 @@ print('\nWorking on initial steps... Please, wait a moment.')
 
 def outputDir():
     if os.path.exists(outputPath) == False:
-        os.mkdir(basePath, 'output')
+        os.mkdir(outputPath)
         print('\nOutput dir. created.')
     else:
         print('\nFound output dir.')
@@ -74,16 +77,16 @@ pgPassword = str(pgPassword)
 conn = psycopg2.connect(dbname='meteo', user='postgres', password=pgPassword,\
 host='localhost', port='5432')
 
-def checkPgTable(connectionParameters, table):
+def checkPgGeoTable(connectionParameters, table):
     '''
-    Função para verificação de presença/ausência de tabela dentro de BD PostgreSQL.
-    Devolve True se existir; False se não existir.
+    Função para verificação de boleana de tabela geográfica dentro de BD PostgreSQL.
+    Carrrega shapefile se a tabela não existir na BD.
     '''
     cur = connectionParameters.cursor()
     cur.execute("select * from information_schema.tables where table_name=%s", (table,))
     # Checking for existence of districts table
     if bool(cur.rowcount) == False:
-    # Loading table to meteo databaase
+    # Creating forecast table in databaase
         command = ["C:\\OSGeo4W64\\bin\\ogr2ogr.exe",
             "-f", "PostgreSQL",
             "PG:host=localhost user=postgres dbname=meteo password=3763", outputPath,
@@ -94,20 +97,7 @@ def checkPgTable(connectionParameters, table):
     else:
         print('\n{} table already exists in meteo database.'.format(table))
 
-checkPgTable(conn, 'merdum')
-
-# # Checking for existence of districts table
-# if checkPgTable(conn, 'districts') == False:
-#     # Loading table to meteo databaase
-#     command = ["C:\\OSGeo4W64\\bin\\ogr2ogr.exe",
-#           "-f", "PostgreSQL",
-#           "PG:host=localhost user=postgres dbname=meteo password=3763", outputPath,
-#           "-lco", "GEOMETRY_NAME=the_geom", "-lco", "FID=gid", "-lco",
-#           "PRECISION=no", "-nlt", "PROMOTE_TO_MULTI", "-nln", "districts", "-overwrite"]
-#     subprocess.check_call(command)
-#     print('\n5 - Districts table loaded into meteo database.')
-# else:
-#     print('\n5 - Districts table already exists in meteo database.')
+checkPgGeoTable(conn, 'districts')
 
 
 # Meteo request to API
@@ -158,7 +148,6 @@ def harvestOWM(coordDic, apiKey, requestType):
                 districtForecast['pressure'] = data.get('current').get('pressure')
                 districtForecast['humidity'] = data.get('current').get('humidity')
                 districtForecast['dew_point'] = data.get('current').get('dew_point')
-                districtForecast['ultrav_index'] = data.get('current').get('uvi')
                 districtForecast['wind_speed'] = data.get('current').get('wind_speed')
                 districtForecast['wind_deg'] = data.get('current').get('wind_deg')
                 forecast.append(districtForecast)
@@ -180,7 +169,6 @@ def harvestOWM(coordDic, apiKey, requestType):
                 districtForecast['pressure'] = data.get('current').get('pressure')
                 districtForecast['humidity'] = data.get('current').get('humidity')
                 districtForecast['dew_point'] = data.get('current').get('dew_point')
-                districtForecast['ultrav_index'] = data.get('current').get('uvi')
                 districtForecast['wind_speed'] = data.get('current').get('wind_speed')
                 districtForecast['wind_deg'] = data.get('current').get('wind_deg')
                 forecast.append(districtForecast)
@@ -203,7 +191,6 @@ def harvestOWM(coordDic, apiKey, requestType):
                 districtForecast['pressure'] = data.get('pressure')
                 districtForecast['humidity'] = data.get('humidity')
                 districtForecast['dew_point'] = data.get('dew_point')
-                districtForecast['ultrav_index'] = data.get('uvi')
                 districtForecast['wind_speed'] = data.get('wind_speed')
                 districtForecast['wind_deg'] = data.get('wind_deg')
                 forecast.append(districtForecast)
@@ -225,21 +212,32 @@ print('\n', meteoDataFrame)
 
 
 # Checking for existence of forecast table
-checkPgTable(conn, 'forecast')
+def checkPgTable(connectionParameters, dataFrame, table):
+    '''
+    Função para verificação de presença/ausência de tabela dentro de BD PostgreSQL.
+    Devolve True se existir; False se não existir.
+    '''
+    cur = connectionParameters.cursor()
+    cur.execute("select * from information_schema.tables where table_name=%s", (table,))
+    # Checking for existence of districts table
+    if bool(cur.rowcount) == False:
+        cols = list(dataFrame.columns)        
+    return cols
 
-# Loading meteorological dataframe into DB
-def df2PgSQL(connectionParameters, df, table):
+print(checkPgTable(conn, meteoDataFrame, 'forecast'))
+
+def df2PgSQL(connectionParameters, dataFrame, table):
     '''
     Utilização da função psycopg2.extras.execute_values()
     para carregamento da data frame colhida na tabela PostGreSQL "forecast"
     '''
     # Create a list of tupples from the dataframe values
-    tuples = [tuple(x) for x in df.to_numpy()]
+    tuples = [tuple(x) for x in dataFrame.to_numpy()]
     # Comma-separated dataframe columns
-    cols = ','.join(list(df.columns))
+    cols = ','.join(list(dataFrame.columns))
     # SQL quert to execute
     query  = "INSERT INTO %s(%s) VALUES %%s" % (table, cols)
-    cursor = conn.cursor()
+    cursor = connectionParameters.cursor()
     try:
         psy2extras.execute_values(cursor, query, tuples)
         conn.commit()
@@ -248,7 +246,25 @@ def df2PgSQL(connectionParameters, df, table):
         conn.rollback()
         cursor.close()
         return 1
-    print('\nMeteorological data has been successfully loaded into DB')
+    print('\nMeteorological data has been successfully loaded into DB.')
     cursor.close()
 
-df2PgSQL(conn, meteoDataFrame, 'forecast')
+# # Loading meteorological dataframe into DB
+# df2PgSQL(conn, meteoDataFrame, 'forecast')
+
+
+# # Finnaly building the map
+# def viewExtraction(connectionParameters):
+#     '''
+#     '''
+#     query = 'drop view if exists last_forecast;\
+#     create view last_forecast as\
+#     select forecast.*, {}.the_geom\
+#     from forecast, centroides\
+#     where forecast.distrito = centroides.distrito\
+#     order by forecast.forecast_id desc limit 18'
+#     cursor = conn
+
+
+# Execution time (finish)
+print("\nmeteo2map executed in %s seconds" % (time.time() - start_time))
