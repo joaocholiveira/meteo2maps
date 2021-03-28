@@ -125,15 +125,17 @@ def requestOWM(coordDic, apiKey):
     for item in coord.items():
         lat = str(item[1][1])
         long = str(item[1][0])
+        # For yesterday's weather
         if requestType == 'Y':
             yesterday = datetime.now() - timedelta(days=1)
             unixTimestamp = int(yesterday.timestamp())
             url = 'https://api.openweathermap.org/data/2.5/onecall/timemachine?lat={}&lon={}&dt={}&appid={}&units=metric'\
             .format(lat, long, unixTimestamp, apiKey)
-
+            # To be continued
+        # For current weather
         elif requestType == 'N':
             url = 'https://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&exclude=minutely,hourly,daily,alerts&appid={}&units=metric'\
-            .format(lat, long, apiKey)
+            .format(lat, long, apiKey) # https://api.openweathermap.org/data/2.5/onecall?lat=33.441792&lon=-94.037689&exclude=minutely,hourly,daily,alerts&appid=44cfad7f82ec61d3f420de3201b703d4
             with urllib.request.urlopen(url) as url:
                 data = json.loads(url.read().decode())
                 districtForecast = {}
@@ -152,14 +154,30 @@ def requestOWM(coordDic, apiKey):
                 districtForecast['wind_speed'] = data.get('current').get('wind_speed')
                 districtForecast['wind_deg'] = data.get('current').get('wind_deg')
                 forecast.append(districtForecast)
+        # For tomorrow's weather
         elif requestType == 'T':
             url = 'https://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&exclude=current,minutly,hourly,alerts&appid={}&units=metric'\
-            .format(lat, long, apiKey)
+            .format(lat, long, apiKey) # https://api.openweathermap.org/data/2.5/onecall?lat=33.441792&lon=-94.037689&exclude=current,minutly,hourly,alerts&appid=44cfad7f82ec61d3f420de3201b703d4
             with urllib.request.urlopen(url) as url:
                 data = json.loads(url.read().decode())
+                data = data['daily'][1]
                 districtForecast = {}
-            print(data) #chama 18x!! estrutura para 1 localização em: https://api.openweathermap.org/data/2.5/onecall?lat=33.441792&lon=-94.037689&exclude=current,minutly,hourly,alerts&appid=44cfad7f82ec61d3f420de3201b703d4
-    # forecast_df = pandas.DataFrame(forecast)
-    # return forecast_df
+                districtForecast['distrito'] = item[0]
+                districtForecast['forecast_date'] = datetime.utcfromtimestamp(data.get('dt')).strftime('%d-%m-%Y')
+                districtForecast['forecast_time'] = datetime.utcfromtimestamp(data.get('dt')).strftime('%H:%M:%S')
+                main = data.get('weather')
+                for item in main:
+                    districtForecast['weather_desc'] = item.get('main')
+                districtForecast['temperature'] = data.get('temp').get('day')
+                districtForecast['feels_like'] = data.get('feels_like').get('day')
+                districtForecast['pressure'] = data.get('pressure')
+                districtForecast['humidity'] = data.get('humidity')
+                districtForecast['dew_point'] = data.get('dew_point')
+                districtForecast['ultrav_index'] = data.get('uvi')
+                districtForecast['wind_speed'] = data.get('wind_speed')
+                districtForecast['wind_deg'] = data.get('wind_deg')
+                forecast.append(districtForecast)
+    forecast_df = pandas.DataFrame(forecast)
+    return forecast_df
 
 print(requestOWM(coord, apiKey))
