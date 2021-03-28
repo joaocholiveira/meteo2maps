@@ -15,21 +15,21 @@ outputPath = 'C:\\saprog\\projeto\\output\\'
 os.chdir(basePath)
 
 
-print('\n1 - Working on initial steps... Please, wait a moment.')
+print('\nWorking on initial steps... Please, wait a moment.')
 
 def outputDir():
     if os.path.exists(outputPath) == False:
         os.mkdir(basePath, 'output')
-        print('\n2 - Output dir. created.')
+        print('\nOutput dir. created.')
     else:
-        print('\n2 - Found output dir.')
+        print('\nFound output dir.')
 
 outputDir()
 
 
 # Working on districts
 if os.path.exists(outputPath+'districts.shp') == False:
-    print('\n3 - districts.shp not found. Let\'s work on it.')
+    print('\ndistricts.shp not found. Let\'s work on it.')
     # Reading main CAOP shapefile (it needs to already exist)
     caop = geopandas.read_file('caop.shp', encoding='utf-8')
     # Executing dissolve from parishes to districts
@@ -39,7 +39,7 @@ if os.path.exists(outputPath+'districts.shp') == False:
     districts = geopandas.read_file(outputPath+'districts.shp', encoding='utf-8')
     # # districts = districts.to_crs(3763)
 else:
-    print('\n3 - Found districts.shp')
+    print('\nFound districts.shp')
     # Reading districts shapefile that already exists
     districts = geopandas.read_file(outputPath+'districts.shp', encoding='utf-8')
     # # districts = districts.to_crs(3763)
@@ -60,7 +60,7 @@ def getCoordTogether(geoDataFrame):
     return coordDic
 
 coord = getCoordTogether(districts)
-print('\n4 - District coordinates compiled.')
+print('\nDistrict coordinates compiled.')
 
 # print(coord)
 
@@ -81,22 +81,33 @@ def checkPgTable(connectionParameters, table):
     '''
     cur = connectionParameters.cursor()
     cur.execute("select * from information_schema.tables where table_name=%s", (table,))
-    return(bool(cur.rowcount))
-
-# print(checkPgTable(conn, 'outra coisa'))
-
-if checkPgTable(conn, 'districts') == False:
+    # Checking for existence of districts table
+    if bool(cur.rowcount) == False:
     # Loading table to meteo databaase
-    command = ["C:\\OSGeo4W64\\bin\\ogr2ogr.exe",
-          "-f", "PostgreSQL",
-          "PG:host=localhost user=postgres dbname=meteo password=3763", outputPath,
-          "-lco", "GEOMETRY_NAME=the_geom", "-lco", "FID=gid", "-lco",
-          "PRECISION=no", "-nlt", "PROMOTE_TO_MULTI", "-nln", "districts", "-overwrite"]
-    subprocess.check_call(command)
-    print('\n5 - Districts table loaded into meteo database.')
-else:
-    print('\n5 - Districts table already exists in meteo database.')
+        command = ["C:\\OSGeo4W64\\bin\\ogr2ogr.exe",
+            "-f", "PostgreSQL",
+            "PG:host=localhost user=postgres dbname=meteo password=3763", outputPath,
+            "-lco", "GEOMETRY_NAME=the_geom", "-lco", "FID=gid", "-lco",
+            "PRECISION=no", "-nlt", "PROMOTE_TO_MULTI", "-nln", table, "-overwrite"]
+        subprocess.check_call(command)
+        print('\n{} table loaded into meteo database.'.format(table))
+    else:
+        print('\n{} table already exists in meteo database.'.format(table))
 
+checkPgTable(conn, 'merdum')
+
+# # Checking for existence of districts table
+# if checkPgTable(conn, 'districts') == False:
+#     # Loading table to meteo databaase
+#     command = ["C:\\OSGeo4W64\\bin\\ogr2ogr.exe",
+#           "-f", "PostgreSQL",
+#           "PG:host=localhost user=postgres dbname=meteo password=3763", outputPath,
+#           "-lco", "GEOMETRY_NAME=the_geom", "-lco", "FID=gid", "-lco",
+#           "PRECISION=no", "-nlt", "PROMOTE_TO_MULTI", "-nln", "districts", "-overwrite"]
+#     subprocess.check_call(command)
+#     print('\n5 - Districts table loaded into meteo database.')
+# else:
+#     print('\n5 - Districts table already exists in meteo database.')
 
 
 # Meteo request to API
@@ -107,12 +118,12 @@ def requestType():
     '''
     # Requesting input
     while True:
-        requestType = input('\n6 - Specify the wanted type of meteomap request [Y for yesterday, N for now, T for tomorrow]:' )
+        requestType = input('\nSpecify the wanted type of meteomap request (Y for yesterday, N for now, T for tomorrow): ' )
         if not re.match('[YNT]', requestType):
-            if requestType == 'EXIT':
+            if requestType == 'exit':
                 sys.exit()
             else:
-                print('Please, limit your input to Y or N or T or exit with \'EXIT\'.')
+                print('Warning - please, limit your input to Y or N or T or exit with \'exit\'.')
                 time.sleep(2)
         else:
             break
@@ -205,7 +216,15 @@ apiKey = str(apiKey)
 
 # Requesting type of meteo ((Y)esterday, (N)ow or (T)omorrow)
 request = requestType()
+print('\nYour request has been successfully validated.')
 
 # Havesting data from Open Weather Map
 meteoDataFrame = harvestOWM(coord, apiKey, request)
-print(meteoDataFrame)
+print('\nMeteorological data has been successfully harvested.')
+print('\n', meteoDataFrame)
+
+
+# Checking for existence of forecast table
+checkPgTable(conn, 'forecast')
+
+# Loading meteorological dataframe into DB
