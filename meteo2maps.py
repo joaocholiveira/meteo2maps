@@ -150,6 +150,7 @@ def harvestOWM(coordDic, apiKey, requestType):
                 districtForecast['dew_point'] = data.get('current').get('dew_point')
                 districtForecast['wind_speed'] = data.get('current').get('wind_speed')
                 districtForecast['wind_deg'] = data.get('current').get('wind_deg')
+                districtForecast['request_type'] = 'yesterday'
                 forecast.append(districtForecast)
         # For current weather
         elif requestType == 'N':
@@ -171,6 +172,7 @@ def harvestOWM(coordDic, apiKey, requestType):
                 districtForecast['dew_point'] = data.get('current').get('dew_point')
                 districtForecast['wind_speed'] = data.get('current').get('wind_speed')
                 districtForecast['wind_deg'] = data.get('current').get('wind_deg')
+                districtForecast['request_type'] = 'now'
                 forecast.append(districtForecast)
         # For tomorrow's weather
         elif requestType == 'T':
@@ -193,6 +195,7 @@ def harvestOWM(coordDic, apiKey, requestType):
                 districtForecast['dew_point'] = data.get('dew_point')
                 districtForecast['wind_speed'] = data.get('wind_speed')
                 districtForecast['wind_deg'] = data.get('wind_deg')
+                districtForecast['request_type'] = 'tomorrow'
                 forecast.append(districtForecast)
     forecast_df = pandas.DataFrame(forecast)
     return forecast_df
@@ -212,7 +215,7 @@ print('\n', meteoDataFrame)
 
 
 # Checking for existence of forecast table
-def checkPgTable(connectionParameters, dataFrame, table):
+def checkPgTable(connectionParameters, table):
     '''
     Função para verificação de presença/ausência de tabela dentro de BD PostgreSQL.
     Devolve True se existir; False se não existir.
@@ -221,10 +224,16 @@ def checkPgTable(connectionParameters, dataFrame, table):
     cur.execute("select * from information_schema.tables where table_name=%s", (table,))
     # Checking for existence of districts table
     if bool(cur.rowcount) == False:
-        cols = list(dataFrame.columns)        
-    return cols
-
-print(checkPgTable(conn, meteoDataFrame, 'forecast'))
+        query  = "CREATE TABLE forecast(\
+        forecast_id SERIAL, distrito VARCHAR(80), forecast_date DATE, forecast_time TIME, weather_desc VARCHAR(80),\
+        temperature FLOAT, feels_like FLOAT, pressure INT, humidity INT, dew_point FLOAT, wind_speed FLOAT, wind_deg INT,\
+        request_type VARCHAR(80), CONSTRAINT forecast_pkey PRIMARY KEY (forecast_id))"
+        cur.execute(query)
+        conn.commit()
+        cur.close()
+        print('\n{} table created into meteo database.'.format(table))
+    else:
+        print('\n{} table already exists in meteo database.'.format(table))
 
 def df2PgSQL(connectionParameters, dataFrame, table):
     '''
@@ -236,7 +245,7 @@ def df2PgSQL(connectionParameters, dataFrame, table):
     # Comma-separated dataframe columns
     cols = ','.join(list(dataFrame.columns))
     # SQL quert to execute
-    query  = "INSERT INTO %s(%s) VALUES %%s" % (table, cols)
+    query  = "INSERT INTO public.%s(%s) VALUES %%s" % (table, cols)
     cursor = connectionParameters.cursor()
     try:
         psy2extras.execute_values(cursor, query, tuples)
@@ -249,8 +258,11 @@ def df2PgSQL(connectionParameters, dataFrame, table):
     print('\nMeteorological data has been successfully loaded into DB.')
     cursor.close()
 
-# # Loading meteorological dataframe into DB
-# df2PgSQL(conn, meteoDataFrame, 'forecast')
+# Checking for forecast table
+checkPgTable(conn, 'forecast')
+
+# Loading meteorological dataframe into DB
+df2PgSQL(conn, meteoDataFrame, 'forecast')
 
 
 # # Finnaly building the map
