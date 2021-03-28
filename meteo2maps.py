@@ -130,8 +130,25 @@ def requestOWM(coordDic, apiKey):
             yesterday = datetime.now() - timedelta(days=1)
             unixTimestamp = int(yesterday.timestamp())
             url = 'https://api.openweathermap.org/data/2.5/onecall/timemachine?lat={}&lon={}&dt={}&appid={}&units=metric'\
-            .format(lat, long, unixTimestamp, apiKey)
-            # To be continued
+            .format(lat, long, unixTimestamp, apiKey) # http://api.openweathermap.org/data/2.5/onecall/timemachine?lat=60.99&lon=30.9&dt=1616943972&appid=44cfad7f82ec61d3f420de3201b703d4
+            with urllib.request.urlopen(url) as url:
+                data = json.loads(url.read().decode())
+                districtForecast = {}
+                districtForecast['distrito'] = item[0]
+                districtForecast['forecast_date'] = datetime.utcfromtimestamp(data.get('current').get('dt')).strftime('%d-%m-%Y')
+                districtForecast['forecast_time'] = datetime.utcfromtimestamp(data.get('current').get('dt')).strftime('%H:%M:%S')
+                main = data.get('current').get('weather')
+                for item in main:
+                    districtForecast['weather_desc'] = item.get('main')
+                districtForecast['temperature'] = data.get('current').get('temp')
+                districtForecast['feels_like'] = data.get('current').get('feels_like')
+                districtForecast['pressure'] = data.get('current').get('pressure')
+                districtForecast['humidity'] = data.get('current').get('humidity')
+                districtForecast['dew_point'] = data.get('current').get('dew_point')
+                districtForecast['ultrav_index'] = data.get('current').get('uvi')
+                districtForecast['wind_speed'] = data.get('current').get('wind_speed')
+                districtForecast['wind_deg'] = data.get('current').get('wind_deg')
+                forecast.append(districtForecast)
         # For current weather
         elif requestType == 'N':
             url = 'https://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&exclude=minutely,hourly,daily,alerts&appid={}&units=metric'\
