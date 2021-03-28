@@ -98,16 +98,12 @@ else:
     print('\n5 - Districts table already exists in meteo database.')
 
 
-# Reading hidden Open Weather Map API key from txt file
-apiKey = open(os.path.join('apikey.txt'), 'r').readline()
-apiKey = str(apiKey)
 
 # Meteo request to API
-def requestOWM(coordDic, apiKey):
+def requestType():
     '''
-    Função para recolha dos dados meteorológicos provenientes da OpenWeather One Call API.
-    Exige ao utilizador a introduçaõ interativa do tipo de pedido de mapa meteorológico.
-    Devolve uma dataframe (pandas) das váriáveis meteorológicas por distrito para o momento indicado.
+    Especificação do tipo de pedido de mapa meteorológico. Exige um input ao user fo tipo str().
+    Devolve str() com a tipologia de mapa meteorológico requerido.
     '''
     # Requesting input
     while True:
@@ -120,7 +116,9 @@ def requestOWM(coordDic, apiKey):
                 time.sleep(2)
         else:
             break
-    # Dealing with user request
+    return requestType
+
+def harvestOWM(coordDic, apiKey, requestType):
     forecast = []
     for item in coord.items():
         lat = str(item[1][1])
@@ -197,4 +195,10 @@ def requestOWM(coordDic, apiKey):
     forecast_df = pandas.DataFrame(forecast)
     return forecast_df
 
-print(requestOWM(coord, apiKey))
+# Reading hidden Open Weather Map API key from txt file
+apiKey = open(os.path.join('apikey.txt'), 'r').readline()
+apiKey = str(apiKey)
+
+request = requestType()
+
+print(harvestOWM(coord, apiKey, request))
