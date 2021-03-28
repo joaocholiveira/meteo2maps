@@ -102,8 +102,8 @@ else:
 # Meteo request to API
 def requestType():
     '''
-    Especificação do tipo de pedido de mapa meteorológico. Exige um input ao user fo tipo str().
-    Devolve str() com a tipologia de mapa meteorológico requerido.
+    Especificação do momento da previsão meteorológica. Exige um input ao user fo tipo str().
+    Devolve str() que identifica o momento da previsão meteorológica equerida.
     '''
     # Requesting input
     while True:
@@ -119,6 +119,10 @@ def requestType():
     return requestType
 
 def harvestOWM(coordDic, apiKey, requestType):
+    '''
+    Execução do tipo de pedido através da Open Weather Map One Call API.
+    Devolve uma dataframe (pandas) com os princiapis parâmetros meteorológicos para cada distrito.
+    '''
     forecast = []
     for item in coord.items():
         lat = str(item[1][1])
@@ -199,6 +203,9 @@ def harvestOWM(coordDic, apiKey, requestType):
 apiKey = open(os.path.join('apikey.txt'), 'r').readline()
 apiKey = str(apiKey)
 
+# Requesting type of meteo ((Y)esterday, (N)ow or (T)omorrow)
 request = requestType()
 
-print(harvestOWM(coord, apiKey, request))
+# Havesting data from Open Weather Map
+meteoDataFrame = harvestOWM(coord, apiKey, request)
+print(meteoDataFrame)
