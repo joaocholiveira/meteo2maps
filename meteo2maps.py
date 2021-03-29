@@ -10,7 +10,7 @@ from geo.Geoserver import Geoserver
 start_time = time.time()
 
 # To disable geopandas CRS warnings in terminal
-# warnings.filterwarnings('ignore')
+warnings.filterwarnings('ignore')
 
 os.environ['SHAPE_ENCODING'] = "utf-8"
 basePath = 'C:\\saprog\\projeto'
@@ -69,8 +69,8 @@ print('\nDistrict coordinates compiled.')
 
 
 # Check the existence of districts table in meteo PG database
-# Reading hidden password from txt file in dir
-pgPassword = open(os.path.join('pw.txt'), 'r').readline()
+# Reading hidden PostgreSQL password from txt file in dir
+pgPassword = open(os.path.join('postgresPw.txt'), 'r').readline()
 pgPassword = str(pgPassword)
 
 # Defining PostgreSQL connection parameters
@@ -286,22 +286,32 @@ def geoViewExtraction(connectionParameters):
 
 geoViewExtraction(conn)
 
-# Geoserver starting in a new command line
-cmd = 'start C:\\"Program Files"\\geoserver\\bin\\startup.bat'
-subprocess.Popen(cmd, shell=True)
+# Geoserver loading
+# Reading hidden Geoserver password from txt file in dir
+gsPassword = open(os.path.join('geoserverPw.txt'), 'r').readline()
+gsPassword = str(gsPassword)
 
-# To give time to Geoserver startup
-time.sleep(20)
+geoserverCred = {'username':'admin', 'password':gsPassword}
 
-# Initialize the library
-geo = Geoserver('http://localhost:8080/geoserver', username='admin', password='geojoao')
+def checkWorkspace(geoserverCredentials, workspaceName):
+    '''
+    '''
+    # Geoserver starting in a new command line
+    cmd = 'start C:\\"Program Files"\\geoserver\\bin\\startup.bat'
+    subprocess.Popen(cmd, shell=True)
+    # To give time to Geoserver startup
+    time.sleep(20)
+    # Initialize the library
+    geo = Geoserver('http://localhost:8080/geoserver', username=geoserverCredentials.get('username'),\
+    password=geoserverCredentials.get('password'))
+    # Checking for workspace
+    if geo.get_workspace(workspace=workspaceName) == None:
+        print('\n{} workspace not found. Let\'s create it.').format(workspaceName)
+        geo.create_workspace(workspace=workspaceName)
+    else:
+        print('\nFound {} workspace.').format(workspaceName)
 
-# For creating workspace
-if geo.get_workspace(workspace='saprog_meteo') == None:
-    print('\nsaprog_meteo workspace not found. Let\'s create it.')
-    geo.create_workspace(workspace='saprog_meteo')
-else:
-    print('\nFound saprog_meteo workspace')
+checkWorkspace(geoserverCred, 'saprog_meteo')
 
 # Opening a new Geoserver GUI ---- delete this
 # webbrowser.open_new('http://localhost:8080/geoserver')
