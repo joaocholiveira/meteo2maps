@@ -246,17 +246,17 @@ def df2PgSQL(connectionParameters, dataFrame, table):
     cols = ','.join(list(dataFrame.columns))
     # SQL quert to execute
     query  = "INSERT INTO public.%s(%s) VALUES %%s" % (table, cols)
-    cursor = connectionParameters.cursor()
+    cur = connectionParameters.cursor()
     try:
-        psy2extras.execute_values(cursor, query, tuples)
+        psy2extras.execute_values(cur, query, tuples)
         conn.commit()
     except (Exception, psycopg2.DatabaseError) as error:
         print("Error: %s" % error)
         conn.rollback()
-        cursor.close()
+        cur.close()
         return 1
     print('\nMeteorological data has been successfully loaded into DB.')
-    cursor.close()
+    cur.close()
 
 # Checking for forecast table
 checkPgTable(conn, 'forecast')
@@ -265,18 +265,23 @@ checkPgTable(conn, 'forecast')
 df2PgSQL(conn, meteoDataFrame, 'forecast')
 
 
-# # Finnaly building the map
-# def viewExtraction(connectionParameters):
-#     '''
-#     '''
-#     query = 'drop view if exists last_forecast;\
-#     create view last_forecast as\
-#     select forecast.*, {}.the_geom\
-#     from forecast, centroides\
-#     where forecast.distrito = centroides.distrito\
-#     order by forecast.forecast_id desc limit 18'
-#     cursor = conn
+# Finnaly building the map
+def geoViewExtraction(connectionParameters):
+    '''
+    '''
+    query = "DROP VIEW IF EXISTS last_forecast;\
+    CREATE VIEW last_forecast as\
+    select forecast.*, districts.the_geom\
+    from forecast, districts\
+    where forecast.distrito = districts.distrito\
+    order by forecast.forecast_id desc limit 18"
+    cur = connectionParameters.cursor()
+    cur.execute(query)
+    conn.commit()
+    cur.close()
+    print('\nPostgreSQL geoview created.')
 
+geoViewExtraction(conn)
 
 # Execution time (finish)
 print("\nmeteo2map executed in %s seconds" % (time.time() - start_time))
