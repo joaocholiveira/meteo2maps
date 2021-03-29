@@ -283,5 +283,17 @@ def geoViewExtraction(connectionParameters):
 
 geoViewExtraction(conn)
 
+# Start Geoerver
+# cmd = '"C:\\Program Files\\geoserver\\bin\\startup.bat"' # Working
+# Geoserver starting in a new command line
+cmd = 'start C:\\"Program Files"\\geoserver\\bin\\startup.bat'
+subprocess.Popen(cmd, shell=True)
+
+# Initialize the library
+# geo = Geoserver('http://localhost:8080/geoserver', username='admin', password='geojoao')
+
+# # For creating workspace
+# geo.create_workspace(workspace='sapsig_meteo')
+
 # Execution time (finish)
 print("\nmeteo2map executed in %s seconds" % (time.time() - start_time))
