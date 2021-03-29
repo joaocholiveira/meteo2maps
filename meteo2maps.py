@@ -297,10 +297,7 @@ time.sleep(20)
 geo = Geoserver('http://localhost:8080/geoserver', username='admin', password='geojoao')
 
 # For creating workspace
-geo.get_workspace(workspace='saprog_meteo')
-time.sleep(20)
-
-if geo.get_workspace(workspace='saprog_meteo') == False:
+if geo.get_workspace(workspace='saprog_meteo') == None:
     print('\nsaprog_meteo workspace not found. Let\'s create it.')
     geo.create_workspace(workspace='saprog_meteo')
 else:
@@ -311,4 +308,4 @@ else:
 
 
 # # Execution time (finish)
-# print("\nmeteo2map executed in %s seconds" % (time.time() - start_time))
+print("\nmeteo2map executed in %s seconds" % (time.time() - start_time))
