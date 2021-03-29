@@ -296,7 +296,6 @@ geo = Geoserver('http://localhost:8080/geoserver', username='admin', password='g
 # For creating workspace
 geo.create_workspace(workspace='sapsig_meteo')
 
-# Pensar numa forma de tornar isto numa função + ignorar criação de workspace se já existir
 
 
 # Execution time (finish)
