@@ -271,6 +271,8 @@ checkPgTable(conn, 'forecast')
 # Finnaly building the map
 def geoViewExtraction(connectionParameters):
     '''
+    Construção de view dentro da BD, respeitante ao último request.
+    Devolve view que associa uma componente espacial às variáveis meteorológicas por distritito.
     '''
     query = "DROP VIEW IF EXISTS last_forecast;\
     CREATE VIEW last_forecast as\
@@ -295,6 +297,8 @@ geoserverCred = {'username':'admin', 'password':gsPassword}
 
 def checkWorkspace(geoserverCredentials, workspaceName):
     '''
+    Verificação de auséncia/presença de workspace dentro do Geoserver.
+    Caso o workspace especificado não exista, a função cria-o.
     '''
     # Geoserver starting in a new command line
     cmd = 'start C:\\"Program Files"\\geoserver\\bin\\startup.bat'
@@ -306,10 +310,10 @@ def checkWorkspace(geoserverCredentials, workspaceName):
     password=geoserverCredentials.get('password'))
     # Checking for workspace
     if geo.get_workspace(workspace=workspaceName) == None:
-        print('\n{} workspace not found. Let\'s create it.').format(workspaceName)
+        print('\n',workspaceName, 'workspace not found. Let\'s create it.')
         geo.create_workspace(workspace=workspaceName)
     else:
-        print('\nFound {} workspace.').format(workspaceName)
+        print('\nFound', workspaceName, 'workspace.')
 
 checkWorkspace(geoserverCred, 'saprog_meteo')
 
