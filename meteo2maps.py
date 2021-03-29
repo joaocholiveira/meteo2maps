@@ -1,5 +1,5 @@
 import os, sys, urllib.request, json, subprocess, geopandas, pandas,\
-shutil, psycopg2, re, requests, time, warnings
+shutil, psycopg2, re, requests, time, warnings, webbrowser
 from datetime import datetime, timedelta
 from psycopg2 import extras as psy2extras
 from geo.Geoserver import Geoserver
@@ -10,7 +10,7 @@ from geo.Geoserver import Geoserver
 start_time = time.time()
 
 # To disable geopandas CRS warnings in terminal
-warnings.filterwarnings('ignore')
+# warnings.filterwarnings('ignore')
 
 os.environ['SHAPE_ENCODING'] = "utf-8"
 basePath = 'C:\\saprog\\projeto'
@@ -133,7 +133,8 @@ def harvestOWM(coordDic, apiKey, requestType):
             yesterday = datetime.now() - timedelta(days=1)
             unixTimestamp = int(yesterday.timestamp())
             url = 'https://api.openweathermap.org/data/2.5/onecall/timemachine?lat={}&lon={}&dt={}&appid={}&units=metric'\
-            .format(lat, long, unixTimestamp, apiKey) # http://api.openweathermap.org/data/2.5/onecall/timemachine?lat=60.99&lon=30.9&dt=1616943972&appid=44cfad7f82ec61d3f420de3201b703d4
+            .format(lat, long, unixTimestamp, apiKey)
+            # example http://api.openweathermap.org/data/2.5/onecall/timemachine?lat=60.99&lon=30.9&dt=1616943972&appid=44cfad7f82ec61d3f420de3201b703d4
             with urllib.request.urlopen(url) as url:
                 data = json.loads(url.read().decode())
                 districtForecast = {}
@@ -155,7 +156,8 @@ def harvestOWM(coordDic, apiKey, requestType):
         # For current weather
         elif requestType == 'N':
             url = 'https://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&exclude=minutely,hourly,daily,alerts&appid={}&units=metric'\
-            .format(lat, long, apiKey) # https://api.openweathermap.org/data/2.5/onecall?lat=33.441792&lon=-94.037689&exclude=minutely,hourly,daily,alerts&appid=44cfad7f82ec61d3f420de3201b703d4
+            .format(lat, long, apiKey)
+            # example https://api.openweathermap.org/data/2.5/onecall?lat=33.441792&lon=-94.037689&exclude=minutely,hourly,daily,alerts&appid=44cfad7f82ec61d3f420de3201b703d4
             with urllib.request.urlopen(url) as url:
                 data = json.loads(url.read().decode())
                 districtForecast = {}
@@ -177,7 +179,8 @@ def harvestOWM(coordDic, apiKey, requestType):
         # For tomorrow's weather
         elif requestType == 'T':
             url = 'https://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&exclude=current,minutly,hourly,alerts&appid={}&units=metric'\
-            .format(lat, long, apiKey) # https://api.openweathermap.org/data/2.5/onecall?lat=33.441792&lon=-94.037689&exclude=current,minutly,hourly,alerts&appid=44cfad7f82ec61d3f420de3201b703d4
+            .format(lat, long, apiKey)
+            # example https://api.openweathermap.org/data/2.5/onecall?lat=33.441792&lon=-94.037689&exclude=current,minutly,hourly,alerts&appid=44cfad7f82ec61d3f420de3201b703d4
             with urllib.request.urlopen(url) as url:
                 data = json.loads(url.read().decode())
                 data = data['daily'][1]
@@ -209,9 +212,9 @@ request = requestType()
 print('\nYour request has been successfully validated.')
 
 # Havesting data from Open Weather Map
-meteoDataFrame = harvestOWM(coord, apiKey, request)
+# meteoDataFrame = harvestOWM(coord, apiKey, request)
 print('\nMeteorological data has been successfully harvested.')
-print('\n', meteoDataFrame)
+# print('\n', meteoDataFrame)
 
 
 # Checking for existence of forecast table
@@ -262,7 +265,7 @@ def df2PgSQL(connectionParameters, dataFrame, table):
 checkPgTable(conn, 'forecast')
 
 # Loading meteorological dataframe into DB
-df2PgSQL(conn, meteoDataFrame, 'forecast')
+# df2PgSQL(conn, meteoDataFrame, 'forecast')
 
 
 # Finnaly building the map
@@ -294,9 +297,18 @@ time.sleep(20)
 geo = Geoserver('http://localhost:8080/geoserver', username='admin', password='geojoao')
 
 # For creating workspace
-geo.create_workspace(workspace='sapsig_meteo')
+geo.get_workspace(workspace='saprog_meteo')
+time.sleep(20)
+
+if geo.get_workspace(workspace='saprog_meteo') == False:
+    print('\nsaprog_meteo workspace not found. Let\'s create it.')
+    geo.create_workspace(workspace='saprog_meteo')
+else:
+    print('\nFound saprog_meteo workspace')
+
+# Opening a new Geoserver GUI ---- delete this
+# webbrowser.open_new('http://localhost:8080/geoserver')
 
 
-
-# Execution time (finish)
-print("\nmeteo2map executed in %s seconds" % (time.time() - start_time))
+# # Execution time (finish)
+# print("\nmeteo2map executed in %s seconds" % (time.time() - start_time))
