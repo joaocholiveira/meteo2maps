@@ -75,7 +75,7 @@ print('\nDistrict coordinates compiled.')
 pgPassword = open(os.path.join('postgresPw.txt'), 'r').readline()
 pgPassword = str(pgPassword)
 
-# Defining PostgreSQL connection parameters (to be replaced by 2.0 pg2pgsql)
+# Defining PostgreSQL connection parameters
 conn = psycopg2.connect(dbname='meteo', user='postgres', password=pgPassword,\
 host='localhost', port='5432')
 
@@ -89,40 +89,15 @@ def checkPgGeoTable(connectionParameters, table):
     # Checking for existence of districts table
     if bool(cur.rowcount) == False:
     # Creating forecast table in databaase
-        command = ["C:\\OSGeo4W64\\bin\\ogr2ogr.exe",
-            "-f", "PostgreSQL",
-            "PG:host=localhost user=postgres dbname=meteo password=3763", outputPath,
-            "-lco", "GEOMETRY_NAME=the_geom", "-lco", "FID=gid", "-lco",
-            "PRECISION=no", "-nlt", "PROMOTE_TO_MULTI", "-nln", table, "-overwrite"]
-        subprocess.check_call(command)
+        command = 'shp2pgsql -s 3763 C:\\saprog\\projeto\\output\\districtsetrs.shp public.districtsetrs\
+        | psql -q -U postgres -d meteo -h localhost -p 5432'
+        os.system(command)
+        time.sleep(5)
         print('\n{} table loaded into meteo database.'.format(table))
     else:
         print('\n{} table already exists in meteo database.'.format(table))
 
-# checkPgGeoTable(conn, 'districtsetrs')
-
-# Defining PostgreSQL connection parameters 2.0
-# conn = psycopg2.connect(dbname='meteo', user='postgres', password=pgPassword,\
-# host='localhost', port='5432')
-
-def checkPgGeoTable2(connectionParameters, table):
-    '''
-    Função para verificação de boleana de tabela geográfica dentro de BD PostgreSQL.
-    Carrrega shapefile se a tabela não existir na BD.
-    '''
-    cur = connectionParameters.cursor()
-    cur.execute("select * from information_schema.tables where table_name=%s", (table,))
-    # Checking for existence of districts table
-    if bool(cur.rowcount) == False:
-    # Creating forecast table in databaase
-        command = ['C:\\"Program Files"\\PostgreSQL\\13\\bin\\shp2pgsql.exe', '-s 3763', outputPath+table+'.shp', 'public.'+table]
-        # C:\\"Program Files"\\PostgreSQL\\13\\bin\\shp2pgsql.exe -s 3763 C:\\saprog\\projeto\\output\\districtsetrs.shp public.districtsetrs | psql -h localhost -p 5432 -U postgres -d meteo
-        subprocess.check_call(command)
-        print('\n{} table loaded into meteo database.'.format(table))
-    else:
-        print('\n{} table already exists in meteo database.'.format(table))
-
-checkPgGeoTable2(conn, 'districtsetrs')
+checkPgGeoTable(conn, 'districtsetrs')
 
 
 # Meteo request to API
@@ -301,7 +276,7 @@ def geoViewExtraction(connectionParameters):
     '''
     query = "DROP VIEW IF EXISTS last_forecast;\
     CREATE VIEW last_forecast as\
-    select forecast.*, districtsetrs.the_geom\
+    select forecast.*, districtsetrs.geom\
     from forecast, districtsetrs\
     where forecast.distrito = districtsetrs.distrito\
     order by forecast.forecast_id desc limit 18"
