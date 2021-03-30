@@ -1,5 +1,5 @@
 import os, sys, urllib.request, json, subprocess, geopandas, pandas,\
-shutil, psycopg2, re, requests, time, warnings, webbrowser, sqlalchemy
+shutil, psycopg2, re, requests, time, warnings, webbrowser
 from datetime import datetime, timedelta
 from psycopg2 import extras as psy2extras
 from geo.Geoserver import Geoserver
@@ -75,7 +75,7 @@ print('\nDistrict coordinates compiled.')
 pgPassword = open(os.path.join('postgresPw.txt'), 'r').readline()
 pgPassword = str(pgPassword)
 
-# Defining PostgreSQL connection parameters
+# Defining PostgreSQL connection parameters (to be replaced by 2.0 pg2pgsql)
 conn = psycopg2.connect(dbname='meteo', user='postgres', password=pgPassword,\
 host='localhost', port='5432')
 
@@ -99,13 +99,13 @@ def checkPgGeoTable(connectionParameters, table):
     else:
         print('\n{} table already exists in meteo database.'.format(table))
 
+# checkPgGeoTable(conn, 'districtsetrs')
+
 # Defining PostgreSQL connection parameters 2.0
 # conn = psycopg2.connect(dbname='meteo', user='postgres', password=pgPassword,\
 # host='localhost', port='5432')
 
-engine = sqlalchemy.create_engine('postgresql://postgresql:3763@localhost/meteo')
-
-def checkPgGeoTable2(connectionParameters, geoDataFrame, table):
+def checkPgGeoTable2(connectionParameters, table):
     '''
     Função para verificação de boleana de tabela geográfica dentro de BD PostgreSQL.
     Carrrega shapefile se a tabela não existir na BD.
@@ -115,12 +115,14 @@ def checkPgGeoTable2(connectionParameters, geoDataFrame, table):
     # Checking for existence of districts table
     if bool(cur.rowcount) == False:
     # Creating forecast table in databaase
-        geoDataFrame.to_postgis(table, engine)
+        command = ['C:\\"Program Files"\\PostgreSQL\\13\\bin\\shp2pgsql.exe', '-s 3763', outputPath+table+'.shp', 'public.'+table]
+        # C:\\"Program Files"\\PostgreSQL\\13\\bin\\shp2pgsql.exe -s 3763 C:\\saprog\\projeto\\output\\districtsetrs.shp public.districtsetrs | psql -h localhost -p 5432 -U postgres -d meteo
+        subprocess.check_call(command)
         print('\n{} table loaded into meteo database.'.format(table))
     else:
         print('\n{} table already exists in meteo database.'.format(table))
 
-checkPgGeoTable2(conn, districtsEtrs, 'districtsetrs')
+checkPgGeoTable2(conn, 'districtsetrs')
 
 
 # Meteo request to API
