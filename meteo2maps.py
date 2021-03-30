@@ -1,5 +1,5 @@
 import os, sys, urllib.request, json, subprocess, geopandas, pandas,\
-shutil, psycopg2, re, requests, time, warnings, webbrowser
+shutil, psycopg2, re, requests, time, warnings, webbrowser, sqlalchemy
 from datetime import datetime, timedelta
 from psycopg2 import extras as psy2extras
 from geo.Geoserver import Geoserver
@@ -37,14 +37,16 @@ if os.path.exists(outputPath+'districts.shp') == False:
     caop = geopandas.read_file('caop.shp', encoding='utf-8')
     # Executing dissolve from parishes to districts
     districts = caop.dissolve(by = 'Distrito')
-    # Saving dissolve output as shapefile and reading it
+    districtsEtrs = districts.to_crs(3763)
+    # Saving dissolve output as shapefile (WGS and) and reading it
     districts.to_file(outputPath+'districts.shp', encoding='utf-8')
+    districtsEtrs.to_file(outputPath+'districtsetrs.shp', encoding='utf-8')
     districts = geopandas.read_file(outputPath+'districts.shp', encoding='utf-8')
-    # # districts = districts.to_crs(3763)
 else:
     print('\nFound districts.shp')
     # Reading districts shapefile that already exists
     districts = geopandas.read_file(outputPath+'districts.shp', encoding='utf-8')
+    districtsEtrs = districts.to_crs(3763)
     # # districts = districts.to_crs(3763)
 
 def getCoordTogether(geoDataFrame):
@@ -97,7 +99,28 @@ def checkPgGeoTable(connectionParameters, table):
     else:
         print('\n{} table already exists in meteo database.'.format(table))
 
-checkPgGeoTable(conn, 'districts')
+# Defining PostgreSQL connection parameters 2.0
+# conn = psycopg2.connect(dbname='meteo', user='postgres', password=pgPassword,\
+# host='localhost', port='5432')
+
+engine = sqlalchemy.create_engine('postgresql://postgresql:3763@localhost/meteo')
+
+def checkPgGeoTable2(connectionParameters, geoDataFrame, table):
+    '''
+    Função para verificação de boleana de tabela geográfica dentro de BD PostgreSQL.
+    Carrrega shapefile se a tabela não existir na BD.
+    '''
+    cur = connectionParameters.cursor()
+    cur.execute("select * from information_schema.tables where table_name=%s", (table,))
+    # Checking for existence of districts table
+    if bool(cur.rowcount) == False:
+    # Creating forecast table in databaase
+        geoDataFrame.to_postgis(table, engine)
+        print('\n{} table loaded into meteo database.'.format(table))
+    else:
+        print('\n{} table already exists in meteo database.'.format(table))
+
+checkPgGeoTable2(conn, districtsEtrs, 'districtsetrs')
 
 
 # Meteo request to API
@@ -212,7 +235,7 @@ request = requestType()
 print('\nYour request has been successfully validated.')
 
 # Havesting data from Open Weather Map
-# meteoDataFrame = harvestOWM(coord, apiKey, request)
+meteoDataFrame = harvestOWM(coord, apiKey, request)
 print('\nMeteorological data has been successfully harvested.')
 # print('\n', meteoDataFrame)
 
@@ -265,7 +288,7 @@ def df2PgSQL(connectionParameters, dataFrame, table):
 checkPgTable(conn, 'forecast')
 
 # Loading meteorological dataframe into DB
-# df2PgSQL(conn, meteoDataFrame, 'forecast')
+df2PgSQL(conn, meteoDataFrame, 'forecast')
 
 
 # Finnaly building the map
@@ -276,9 +299,9 @@ def geoViewExtraction(connectionParameters):
     '''
     query = "DROP VIEW IF EXISTS last_forecast;\
     CREATE VIEW last_forecast as\
-    select forecast.*, districts.the_geom\
-    from forecast, districts\
-    where forecast.distrito = districts.distrito\
+    select forecast.*, districtsetrs.the_geom\
+    from forecast, districtsetrs\
+    where forecast.distrito = districtsetrs.distrito\
     order by forecast.forecast_id desc limit 18"
     cur = connectionParameters.cursor()
     cur.execute(query)
