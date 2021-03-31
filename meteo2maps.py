@@ -1,3 +1,5 @@
+# Made by João H. Oliveira (2021), as a project for Software Aberto e Programação em SIG
+
 #%%
 import os, sys, urllib.request, json, subprocess, geopandas, pandas,\
 shutil, psycopg2, re, requests, time, warnings, webbrowser
