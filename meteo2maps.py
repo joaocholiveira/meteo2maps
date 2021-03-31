@@ -1,9 +1,11 @@
+#%%
 import os, sys, urllib.request, json, subprocess, geopandas, pandas,\
 shutil, psycopg2, re, requests, time, warnings, webbrowser
 from datetime import datetime, timedelta
 from psycopg2 import extras as psy2extras
 from geo.Geoserver import Geoserver
 
+#%%
 # camelCase style adopted
 
 # Execution time (start)
@@ -29,6 +31,7 @@ def outputDir():
 
 outputDir()
 
+#%%
 
 # Working on districts
 if os.path.exists(outputPath+'districts.shp') == False:
@@ -69,6 +72,7 @@ print('\nDistrict coordinates compiled.')
 
 # print(coord)
 
+#%%
 
 # Check the existence of districts table in meteo PG database
 # Reading hidden PostgreSQL password from txt file in dir
@@ -99,6 +103,7 @@ def checkPgGeoTable(connectionParameters, table):
 
 checkPgGeoTable(conn, 'districtsetrs')
 
+#%%
 
 # Meteo request to API
 def requestType():
@@ -216,6 +221,7 @@ meteoDataFrame = harvestOWM(coord, apiKey, request)
 print('\nMeteorological data has been successfully harvested.')
 # print('\n', meteoDataFrame)
 
+#%%
 
 # Checking for existence of forecast table
 def checkPgTable(connectionParameters, table):
@@ -267,6 +273,7 @@ checkPgTable(conn, 'forecast')
 # Loading meteorological dataframe into DB
 df2PgSQL(conn, meteoDataFrame, 'forecast')
 
+#%%
 
 # Finnaly building the map
 def geoViewExtraction(connectionParameters):
