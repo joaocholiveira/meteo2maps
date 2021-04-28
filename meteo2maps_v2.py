@@ -1,4 +1,5 @@
 # Made by João H. Oliveira (2021), as a project for Software Aberto e Programação em SIG
+# camelCase adopted
 
 #%%
 import os, sys, urllib.request, json, subprocess, geopandas, pandas,\
@@ -8,7 +9,11 @@ from psycopg2 import extras as psy2extras
 from geo.Geoserver import Geoserver
 
 #%%
-# camelCase style adopted
+
+def getMessageString(msg):
+    status['counter'] += 1
+    counterString = str(status['counter']) + '. ' + msg
+    return counterString
 
 # Execution time (start)
 start_time = time.time()
@@ -331,4 +336,14 @@ checkWorkspace(geoserverCred, 'saprog_meteo')
 
 # # Execution time (finish)
 print("\nmeteo2map executed in %s seconds" % (time.time() - start_time))
+
+
 # %%
+
+def start():
+    global satus
+    status = {'counter': 0}
+
+
+if __name__ == '__main__':
+    start()
