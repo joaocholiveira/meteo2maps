@@ -303,16 +303,20 @@ gsPassword = str(gsPassword)
 
 geoserverCred = {'username':'admin', 'password':gsPassword}
 
-def checkWorkspace(geoserverCredentials, workspaceName):
-    '''
-    Verificação de ausência/presença de workspace dentro do Geoserver.
-    Caso o workspace especificado não exista, a função cria-o.
-    '''
+def initializeGeoserver():
     # Geoserver starting in a new command line
     cmd = 'start C:\\"Program Files"\\geoserver\\bin\\startup.bat'
     subprocess.Popen(cmd, shell=True)
     # To give time to Geoserver startup
     time.sleep(20)
+
+# initializeGeoserver()
+
+def checkWorkspace(geoserverCredentials, workspaceName):
+    '''
+    Verificação de ausência/presença de workspace dentro do Geoserver.
+    Caso o workspace especificado não exista, a função cria-o.
+    '''
     # Initialize the library
     geo = Geoserver('http://localhost:8080/geoserver', username=geoserverCredentials.get('username'),\
     password=geoserverCredentials.get('password'))
@@ -325,9 +329,36 @@ def checkWorkspace(geoserverCredentials, workspaceName):
 
 checkWorkspace(geoserverCred, 'saprog_meteo')
 
-# Opening a new Geoserver GUI ---- delete this
-# webbrowser.open_new('http://localhost:8080/geoserver')
+postgresCred = {'dbname':'meteo', 'user':'postgres', 'password':pgPassword,\
+'host':'localhost', 'port':'5432'}
 
+def createFeatureStore(geoserverCredentials, postgresCredentials, storeName, workspaceName):
+    '''
+    Verificação de ausência/presença de featurestore dentro do Geoserver.
+    Caso a featurestore especificado não exista, a função cria-a.
+    '''
+    geo = Geoserver('http://localhost:8080/geoserver', username=geoserverCred.get('username'),\
+    password=geoserverCredentials.get('password'))
+    # NÃO ESTÁ A A CAIR NO NONE
+    if geo.get_featurestore(store_name=storeName, workspace=workspaceName) == None:
+        print('\n',storeName, 'featurestore not found. Let\'s create it.')
+        geo.create_featurestore(store_name=storeName, workspace=workspaceName, db=postgresCredentials.get('dbname'),\
+        host=postgresCredentials.get('host'), pg_user=postgresCredentials.get('user'), pg_password=postgresCredentials.get('password'))
+    else:
+        print('\nFound', storeName, 'featurestore.')
+
+createFeatureStore(geoserverCred, postgresCred, 'meteomap', 'saprog_meteo')
+
+# geo = Geoserver('http://localhost:8080/geoserver', username=geoserverCred.get('username'),\
+# password=geoserverCred.get('password'))
+
+# test = geo.get_featurestore(store_name='meteomap', workspace='saprog_meteo')
+# print(test)
+
+
+# def publishFeatureStore(postgresCredentials, workspaceName, storeName):
+
+# don in use : https://geoserver-rest.readthedocs.io/en/latest/how_to_use.html?highlight=geo.get_featurestore#creating-and-publishing-featurestores-and-featurestore-layers
 
 # # Execution time (finish)
 print("\nmeteo2map executed in %s seconds" % (time.time() - start_time))
