@@ -304,6 +304,10 @@ gsPassword = str(gsPassword)
 geoserverCred = {'username':'admin', 'password':gsPassword}
 
 def initializeGeoserver():
+    '''
+    Inicialização do Geoserver através da linha de comandos.
+    '''
+    print('\nStarting Geoserver. Just wait a moment please.')
     # Geoserver starting in a new command line
     cmd = 'start C:\\"Program Files"\\geoserver\\bin\\startup.bat'
     subprocess.Popen(cmd, shell=True)
@@ -337,9 +341,10 @@ def createFeatureStore(geoserverCredentials, postgresCredentials, workspaceName,
     Verificação de ausência/presença de featurestore dentro do Geoserver.
     Caso a featurestore especificado não exista, a função cria-a.
     '''
-    geo = Geoserver('http://localhost:8080/geoserver', username=geoserverCred.get('username'),\
+    geo = Geoserver('http://localhost:8080/geoserver', username=geoserverCredentials.get('username'),\
     password=geoserverCredentials.get('password'))
-    if geo.get_featurestore(workspace=workspaceName, store_name=storeName) == 'Error: Expecting value: line 1 column 1 (char 0)':
+    if geo.get_featurestore(workspace=workspaceName, store_name=storeName)\
+    == 'Error: Expecting value: line 1 column 1 (char 0)':
         print('\n',storeName, 'featurestore not found. Let\'s create it.')
         geo.create_featurestore( workspace=workspaceName, store_name=storeName, db=postgresCredentials.get('dbname'),\
         host=postgresCredentials.get('host'), pg_user=postgresCredentials.get('user'), pg_password=postgresCredentials.get('password'))
@@ -354,11 +359,23 @@ def publishFeatureStore(geoserverCredentials, workspaceName, storeName, tableNam
     Necessita de exista a referida view dentro da base de dados Postgres,
     e do workspace e featurestore definida dentro do Geoserver.
     '''
-    geo = Geoserver('http://localhost:8080/geoserver', username=geoserverCred.get('username'),\
+    geo = Geoserver('http://localhost:8080/geoserver', username=geoserverCredentials.get('username'),\
     password=geoserverCredentials.get('password'))
-    geo.publish_featurestore(workspace=workspaceName, store_name=storeName, pg_table=tableName)
+    if geo.get_layer(workspace=workspaceName, layer_name=tableName)\
+    == "get_layer error: Expecting value: line 1 column 1 (char 0)".format(tableName, storeName):
+        print('\nForecast layer successfully uploaded.')
+        geo.publish_featurestore(workspace=workspaceName, store_name=storeName, pg_table=tableName)
+    else:
+        print("\nThere was an old forecast stored. Let's create an updated layer")
+        geo.delete_layer(layer_name=tableName, workspace=workspaceName)
+        geo.publish_featurestore(workspace=workspaceName, store_name=storeName, pg_table=tableName)
+        
 
 publishFeatureStore(geoserverCred, 'saprog_meteo', 'meteomap', 'last_forecast')
+
+# geo = Geoserver('http://localhost:8080/geoserver', username=geoserverCred.get('username'),\
+# password=geoserverCred.get('password'))
+# print(geo.get_layer(workspace='saprog_meteo', layer_name='last_forecast'))
         
 
 
