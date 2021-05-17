@@ -314,7 +314,7 @@ def initializeGeoserver():
     # To give time to Geoserver startup
     time.sleep(20)
 
-# initializeGeoserver()
+initializeGeoserver()
 
 def checkWorkspace(geoserverCredentials, workspaceName):
     '''
