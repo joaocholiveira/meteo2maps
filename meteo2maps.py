@@ -21,14 +21,29 @@ basePath = 'C:\\saprog\\projeto'
 outputPath = 'C:\\saprog\\projeto\\output\\'
 os.chdir(basePath)
 
-print('\nWorking on initial steps... Please, wait a moment.')
+# Counter support for getMessageString
+global counter
+counter = {'counter': 0}
+
+def getMessageString(msg):
+    '''
+    Função desenhada para substituir o simples "print", adicionando-lhe
+    uma contagem incrementável ao longo da execução do programa.
+    Deverá ser empregue sempre que se pretender estabelecer contacto com o
+    utilizador pela linha de comandos.
+    '''
+    counter['counter'] += 1
+    counterString = print('\n', str(counter['counter']) + '. ' + msg)
+    return counterString, counter
+
+getMessageString('Working on initial steps... Please, wait a moment.')
 
 def outputDir():
     if os.path.exists(outputPath) == False:
         os.mkdir(outputPath)
-        print('\nOutput dir. created.')
+        getMessageString('Output dir. created.')
     else:
-        print('\nFound output dir.')
+        getMessageString('Found output dir.')
 
 outputDir()
 
@@ -36,7 +51,7 @@ outputDir()
 
 # Working on districts
 if os.path.exists(outputPath+'districts.shp') == False:
-    print('\ndistricts.shp not found. Let\'s work on it.')
+    getMessageString('districts.shp not found. Let\'s work on it.')
     # Reading main CAOP shapefile (it needs to already exist)
     caop = geopandas.read_file('caop.shp', encoding='utf-8')
     # Executing dissolve from parishes to districts
@@ -47,7 +62,7 @@ if os.path.exists(outputPath+'districts.shp') == False:
     districtsEtrs.to_file(outputPath+'districtsetrs.shp', encoding='utf-8')
     districts = geopandas.read_file(outputPath+'districts.shp', encoding='utf-8')
 else:
-    print('\nFound districts.shp')
+    getMessageString('Found districts.shp')
     # Reading districts shapefile that already exists
     districts = geopandas.read_file(outputPath+'districts.shp', encoding='utf-8')
     districtsEtrs = districts.to_crs(3763)
@@ -69,9 +84,7 @@ def getCoordTogether(geoDataFrame):
     return coordDic
 
 coord = getCoordTogether(districts)
-print('\nDistrict coordinates compiled.')
-
-# print(coord)
+getMessageString('District coordinates compiled.')
 
 #%%
 
@@ -98,9 +111,9 @@ def checkPgGeoTable(connectionParameters, table):
         | psql -q -U postgres -d meteo -h localhost -p 5432'
         os.system(command)
         time.sleep(5)
-        print('\n{} table loaded into meteo database.'.format(table))
+        getMessageString('{} table loaded into meteo database.'.format(table))
     else:
-        print('\n{} table already exists in meteo database.'.format(table))
+        getMessageString('{} table already exists in meteo database.'.format(table))
 
 checkPgGeoTable(conn, 'districtsetrs')
 
@@ -119,7 +132,7 @@ def requestType():
             if requestType == 'exit':
                 sys.exit()
             else:
-                print('Warning - please, limit your input to Y or N or T or exit with \'exit\'.')
+                getMessageString('Warning - please, limit your input to Y or N or T or exit with \'exit\'.')
                 time.sleep(2)
         else:
             break
@@ -215,12 +228,11 @@ apiKey = str(apiKey)
 
 # Requesting type of meteo ((Y)esterday, (N)ow or (T)omorrow)
 request = requestType()
-print('\nYour request has been successfully validated.')
+getMessageString('Your request has been successfully validated.')
 
 # Havesting data from Open Weather Map
 meteoDataFrame = harvestOWM(coord, apiKey, request)
-print('\nMeteorological data has been successfully harvested.')
-# print('\n', meteoDataFrame)
+getMessageString('Meteorological data has been successfully harvested.')
 
 #%%
 
@@ -241,9 +253,9 @@ def checkPgTable(connectionParameters, table):
         cur.execute(query)
         conn.commit()
         cur.close()
-        print('\n{} table created into meteo database.'.format(table))
+        getMessageString('{} table created into meteo database.'.format(table))
     else:
-        print('\n{} table already exists in meteo database.'.format(table))
+        getMessageString('{} table already exists in meteo database.'.format(table))
 
 def df2PgSQL(connectionParameters, dataFrame, table):
     '''
@@ -261,11 +273,11 @@ def df2PgSQL(connectionParameters, dataFrame, table):
         psy2extras.execute_values(cur, query, tuples)
         conn.commit()
     except (Exception, psycopg2.DatabaseError) as error:
-        print("Error: %s" % error)
+        getMessageString("Error: %s" % error)
         conn.rollback()
         cur.close()
         return 1
-    print('\nMeteorological data has been successfully loaded into DB.')
+    getMessageString('Meteorological data has been successfully loaded into DB.')
     cur.close()
 
 # Checking for forecast table
@@ -292,7 +304,7 @@ def geoViewExtraction(connectionParameters):
     cur.execute(query)
     conn.commit()
     cur.close()
-    print('\nPostgreSQL geoview created.')
+    getMessageString('PostgreSQL geoview created.')
 
 geoViewExtraction(conn)
 
@@ -307,14 +319,14 @@ def initializeGeoserver():
     '''
     Inicialização do Geoserver através da linha de comandos.
     '''
-    print('\nStarting Geoserver. Just wait a moment please.')
+    getMessageString('Starting Geoserver. Please, wait a moment.')
     # Geoserver starting in a new command line
     cmd = 'start C:\\"Program Files"\\geoserver\\bin\\startup.bat'
     subprocess.Popen(cmd, shell=True)
     # To give time to Geoserver startup
     time.sleep(20)
 
-initializeGeoserver()
+# initializeGeoserver()
 
 def checkWorkspace(geoserverCredentials, workspaceName):
     '''
@@ -326,10 +338,10 @@ def checkWorkspace(geoserverCredentials, workspaceName):
     password=geoserverCredentials.get('password'))
     # Checking for workspace
     if geo.get_workspace(workspace=workspaceName) == None:
-        print('\n',workspaceName, 'workspace not found. Let\'s create it.')
+        getMessageString(workspaceName, 'workspace not found. Let\'s create it.')
         geo.create_workspace(workspace=workspaceName)
     else:
-        print('\nFound', workspaceName, 'workspace.')
+        getMessageString('Found {} workspace.'.format(workspaceName))
 
 checkWorkspace(geoserverCred, 'saprog_meteo')
 
@@ -345,11 +357,11 @@ def createFeatureStore(geoserverCredentials, postgresCredentials, workspaceName,
     password=geoserverCredentials.get('password'))
     if geo.get_featurestore(workspace=workspaceName, store_name=storeName)\
     == 'Error: Expecting value: line 1 column 1 (char 0)':
-        print('\n',storeName, 'featurestore not found. Let\'s create it.')
+        getMessageString(storeName, 'featurestore not found. Let\'s create it.')
         geo.create_featurestore( workspace=workspaceName, store_name=storeName, db=postgresCredentials.get('dbname'),\
         host=postgresCredentials.get('host'), pg_user=postgresCredentials.get('user'), pg_password=postgresCredentials.get('password'))
     else:
-        print('\nFound', storeName, 'featurestore.')
+        getMessageString('Found {} featurestore.'.format(storeName))
 
 createFeatureStore(geoserverCred, postgresCred, 'saprog_meteo', 'meteomap')
 
@@ -363,10 +375,10 @@ def publishFeatureStore(geoserverCredentials, workspaceName, storeName, tableNam
     password=geoserverCredentials.get('password'))
     if geo.get_layer(workspace=workspaceName, layer_name=tableName)\
     == "get_layer error: Expecting value: line 1 column 1 (char 0)".format(tableName, storeName):
-        print('\nForecast layer successfully uploaded.')
+        getMessageString('Forecast layer successfully uploaded.')
         geo.publish_featurestore(workspace=workspaceName, store_name=storeName, pg_table=tableName)
     else:
-        print("\nThere was an old forecast stored. Let's create an updated layer")
+        getMessageString("There was an old forecast stored. Let's create an updated layer")
         geo.delete_layer(layer_name=tableName, workspace=workspaceName)
         geo.publish_featurestore(workspace=workspaceName, store_name=storeName, pg_table=tableName)
         
@@ -384,4 +396,4 @@ publishFeatureStore(geoserverCred, 'saprog_meteo', 'meteomap', 'last_forecast')
 
 # %%
 # # Execution time (finish)
-print("\nmeteo2map executed in %s seconds" % (time.time() - start_time))
+getMessageString("meteo2map executed in %s seconds" % (time.time() - start_time))
