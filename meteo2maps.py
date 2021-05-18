@@ -137,91 +137,7 @@ def requestType():
             break
     return requestType
 
-# def harvestOWM(coordDic, apiKey, requestType):
-#     '''
-#     Execução do tipo de pedido através da Open Weather Map One Call API.
-#     Devolve uma dataframe (pandas) com os princiapis parâmetros meteorológicos para cada distrito.
-#     '''
-#     forecast = []
-#     for item in coord.items():
-#         lat = str(item[1][1])
-#         long = str(item[1][0])
-#         # For yesterday's weather
-#         if requestType == 'Y':
-#             yesterday = datetime.now() - timedelta(days=1)
-#             unixTimestamp = int(yesterday.timestamp())
-#             url = 'https://api.openweathermap.org/data/2.5/onecall/timemachine?lat={}&lon={}&dt={}&appid={}&units=metric'\
-#             .format(lat, long, unixTimestamp, apiKey)
-#             # example http://api.openweathermap.org/data/2.5/onecall/timemachine?lat=60.99&lon=30.9&dt=1616943972&appid=44cfad7f82ec61d3f420de3201b703d4
-#             with urllib.request.urlopen(url) as url:
-#                 data = json.loads(url.read().decode())
-#                 districtForecast = {}
-#                 districtForecast['distrito'] = item[0]
-#                 districtForecast['forecast_date'] = datetime.utcfromtimestamp(data.get('current').get('dt')).strftime('%d-%m-%Y')
-#                 districtForecast['forecast_time'] = datetime.utcfromtimestamp(data.get('current').get('dt')).strftime('%H:%M:%S')
-#                 main = data.get('current').get('weather')
-#                 for item in main:
-#                     districtForecast['weather_desc'] = item.get('main')
-#                 districtForecast['temperature'] = data.get('current').get('temp')
-#                 districtForecast['feels_like'] = data.get('current').get('feels_like')
-#                 districtForecast['pressure'] = data.get('current').get('pressure')
-#                 districtForecast['humidity'] = data.get('current').get('humidity')
-#                 districtForecast['dew_point'] = data.get('current').get('dew_point')
-#                 districtForecast['wind_speed'] = data.get('current').get('wind_speed')
-#                 districtForecast['wind_deg'] = data.get('current').get('wind_deg')
-#                 districtForecast['request_type'] = 'yesterday'
-#                 forecast.append(districtForecast)
-#         # For current weather
-#         elif requestType == 'N':
-#             url = 'https://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&exclude=minutely,hourly,daily,alerts&appid={}&units=metric'\
-#             .format(lat, long, apiKey)
-#             # example https://api.openweathermap.org/data/2.5/onecall?lat=33.441792&lon=-94.037689&exclude=minutely,hourly,daily,alerts&appid=44cfad7f82ec61d3f420de3201b703d4
-#             with urllib.request.urlopen(url) as url:
-#                 data = json.loads(url.read().decode())
-#                 districtForecast = {}
-#                 districtForecast['distrito'] = item[0]
-#                 districtForecast['forecast_date'] = datetime.utcfromtimestamp(data.get('current').get('dt')).strftime('%d-%m-%Y')
-#                 districtForecast['forecast_time'] = datetime.utcfromtimestamp(data.get('current').get('dt')).strftime('%H:%M:%S')
-#                 main = data.get('current').get('weather')
-#                 for item in main:
-#                     districtForecast['weather_desc'] = item.get('main')
-#                 districtForecast['temperature'] = data.get('current').get('temp')
-#                 districtForecast['feels_like'] = data.get('current').get('feels_like')
-#                 districtForecast['pressure'] = data.get('current').get('pressure')
-#                 districtForecast['humidity'] = data.get('current').get('humidity')
-#                 districtForecast['dew_point'] = data.get('current').get('dew_point')
-#                 districtForecast['wind_speed'] = data.get('current').get('wind_speed')
-#                 districtForecast['wind_deg'] = data.get('current').get('wind_deg')
-#                 districtForecast['request_type'] = 'now'
-#                 forecast.append(districtForecast)
-#         # For tomorrow's weather
-#         elif requestType == 'T':
-#             url = 'https://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&exclude=current,minutly,hourly,alerts&appid={}&units=metric'\
-#             .format(lat, long, apiKey)
-#             # example https://api.openweathermap.org/data/2.5/onecall?lat=33.441792&lon=-94.037689&exclude=current,minutly,hourly,alerts&appid=44cfad7f82ec61d3f420de3201b703d4
-#             with urllib.request.urlopen(url) as url:
-#                 data = json.loads(url.read().decode())
-#                 data = data['daily'][1]
-#                 districtForecast = {}
-#                 districtForecast['distrito'] = item[0]
-#                 districtForecast['forecast_date'] = datetime.utcfromtimestamp(data.get('dt')).strftime('%d-%m-%Y')
-#                 districtForecast['forecast_time'] = datetime.utcfromtimestamp(data.get('dt')).strftime('%H:%M:%S')
-#                 main = data.get('weather')
-#                 for item in main:
-#                     districtForecast['weather_desc'] = item.get('main')
-#                 districtForecast['temperature'] = data.get('temp').get('day')
-#                 districtForecast['feels_like'] = data.get('feels_like').get('day')
-#                 districtForecast['pressure'] = data.get('pressure')
-#                 districtForecast['humidity'] = data.get('humidity')
-#                 districtForecast['dew_point'] = data.get('dew_point')
-#                 districtForecast['wind_speed'] = data.get('wind_speed')
-#                 districtForecast['wind_deg'] = data.get('wind_deg')
-#                 districtForecast['request_type'] = 'tomorrow'
-#                 forecast.append(districtForecast)
-#     forecast_df = pandas.DataFrame(forecast)
-#     return forecast_df
-
-def harvestOWM2(coordDic, apiKey, requestType):
+def harvestOWM(coordDic, apiKey, requestType):
     '''
     Execução do tipo de pedido através da Open Weather Map One Call API.
     Devolve uma dataframe (pandas) com os princiapis parâmetros meteorológicos para cada distrito.
@@ -255,19 +171,37 @@ def harvestOWM2(coordDic, apiKey, requestType):
                 pass
             districtForecast = {}
             districtForecast['distrito'] = item[0]
-            districtForecast['forecast_date'] = datetime.utcfromtimestamp(data.get('current').get('dt')).strftime('%d-%m-%Y')
-            districtForecast['forecast_time'] = datetime.utcfromtimestamp(data.get('current').get('dt')).strftime('%H:%M:%S')
-            main = data.get('current').get('weather')
-            for item in main:
-                districtForecast['weather_desc'] = item.get('main')
-            districtForecast['temperature'] = data.get('current').get('temp')
-            districtForecast['feels_like'] = data.get('current').get('feels_like')
-            districtForecast['pressure'] = data.get('current').get('pressure')
-            districtForecast['humidity'] = data.get('current').get('humidity')
-            districtForecast['dew_point'] = data.get('current').get('dew_point')
-            districtForecast['wind_speed'] = data.get('current').get('wind_speed')
-            districtForecast['wind_deg'] = data.get('current').get('wind_deg')
-            districtForecast['request_type'] = 'yesterday'
+            if requestType == 'Y' or requestType == 'N':
+                districtForecast['forecast_date'] = datetime.utcfromtimestamp(data.get('current').get('dt')).strftime('%d-%m-%Y')
+                districtForecast['forecast_time'] = datetime.utcfromtimestamp(data.get('current').get('dt')).strftime('%H:%M:%S')
+                main = data.get('current').get('weather')
+                for item in main:
+                    districtForecast['weather_desc'] = item.get('main')
+                districtForecast['temperature'] = data.get('current').get('temp')
+                districtForecast['feels_like'] = data.get('current').get('feels_like')
+                districtForecast['pressure'] = data.get('current').get('pressure')
+                districtForecast['humidity'] = data.get('current').get('humidity')
+                districtForecast['dew_point'] = data.get('current').get('dew_point')
+                districtForecast['wind_speed'] = data.get('current').get('wind_speed')
+                districtForecast['wind_deg'] = data.get('current').get('wind_deg')
+                if requestType == 'Y':
+                    districtForecast['request_type'] = 'yesterday'
+                elif requestType == 'N':
+                    districtForecast['request_type'] = 'now'
+            else:
+                districtForecast['forecast_date'] = datetime.utcfromtimestamp(data.get('dt')).strftime('%d-%m-%Y')
+                districtForecast['forecast_time'] = datetime.utcfromtimestamp(data.get('dt')).strftime('%H:%M:%S')
+                main = data.get('weather')
+                for item in main:
+                    districtForecast['weather_desc'] = item.get('main')
+                districtForecast['temperature'] = data.get('temp').get('day')
+                districtForecast['feels_like'] = data.get('feels_like').get('day')
+                districtForecast['pressure'] = data.get('pressure')
+                districtForecast['humidity'] = data.get('humidity')
+                districtForecast['dew_point'] = data.get('dew_point')
+                districtForecast['wind_speed'] = data.get('wind_speed')
+                districtForecast['wind_deg'] = data.get('wind_deg')
+                districtForecast['request_type'] = 'tomorrow'
             forecast.append(districtForecast)
     forecast_df = pandas.DataFrame(forecast)
     return forecast_df
@@ -281,7 +215,7 @@ request = requestType()
 getMessageString('Your request has been successfully validated.')
 
 # Havesting data from Open Weather Map
-meteoDataFrame = harvestOWM2(coord, apiKey, request)                                                            #CUIDADO COM O 2 NO NOME DA FUNÇÃO
+meteoDataFrame = harvestOWM(coord, apiKey, request)
 getMessageString('Meteorological data has been successfully harvested.')
 
 #%%
@@ -344,8 +278,8 @@ def geoViewExtraction(connectionParameters):
     Construção de view dentro da BD, respeitante ao último request.
     Devolve view que associa uma componente espacial às variáveis meteorológicas por distritito.
     '''
-    query = "DROP VIEW IF EXISTS last_forecast;\
-    CREATE VIEW last_forecast as\
+    query = "DROP VIEW IF EXISTS forecast_map;\
+    CREATE VIEW forecast_map as\
     select forecast.*, districtsetrs.geom\
     from forecast, districtsetrs\
     where forecast.distrito = districtsetrs.distrito\
@@ -354,7 +288,7 @@ def geoViewExtraction(connectionParameters):
     cur.execute(query)
     conn.commit()
     cur.close()
-    getMessageString('PostgreSQL geoview created.')
+    getMessageString('PostgreSQL forecast_map geoview created.')
 
 geoViewExtraction(conn)
 
@@ -376,7 +310,7 @@ def initializeGeoserver():
     # To give time to Geoserver startup
     time.sleep(20)
 
-initializeGeoserver()
+# initializeGeoserver()
 
 def checkWorkspace(geoserverCredentials, workspaceName):
     '''
@@ -388,7 +322,7 @@ def checkWorkspace(geoserverCredentials, workspaceName):
     password=geoserverCredentials.get('password'))
     # Checking for workspace
     if geo.get_workspace(workspace=workspaceName) == None:
-        getMessageString(workspaceName, 'workspace not found. Let\'s create it.')
+        getMessageString('{} workspace not found. Let\'s create it.'.format(workspaceName))
         geo.create_workspace(workspace=workspaceName)
     else:
         getMessageString('Found {} workspace.'.format(workspaceName))
@@ -407,7 +341,7 @@ def createFeatureStore(geoserverCredentials, postgresCredentials, workspaceName,
     password=geoserverCredentials.get('password'))
     if geo.get_featurestore(workspace=workspaceName, store_name=storeName)\
     == 'Error: Expecting value: line 1 column 1 (char 0)':
-        getMessageString(storeName, 'featurestore not found. Let\'s create it.')
+        getMessageString('{} featurestore not found. Let\'s create it.'.format(storeName))
         geo.create_featurestore( workspace=workspaceName, store_name=storeName, db=postgresCredentials.get('dbname'),\
         host=postgresCredentials.get('host'), pg_user=postgresCredentials.get('user'), pg_password=postgresCredentials.get('password'))
     else:
@@ -415,7 +349,7 @@ def createFeatureStore(geoserverCredentials, postgresCredentials, workspaceName,
 
 createFeatureStore(geoserverCred, postgresCred, 'saprog_meteo', 'meteomap')
 
-def publishFeatureStore(geoserverCredentials, workspaceName, storeName, layerName, pgTableName):
+def publishFeatureStore(geoserverCredentials, workspaceName, storeName, pgTableName):
     '''
     Função para carregamento da view em base de dados para o featurestore.
     Necessita de exista a referida view dentro da base de dados Postgres,
@@ -423,26 +357,19 @@ def publishFeatureStore(geoserverCredentials, workspaceName, storeName, layerNam
     '''
     geo = Geoserver('http://localhost:8080/geoserver', username=geoserverCredentials.get('username'),\
     password=geoserverCredentials.get('password'))
-    if geo.get_layer(workspace=workspaceName, layer_name=layerName)\
-    == "get_layer error: Expecting value: line 1 column 1 (char 0)".format(layerName, storeName):
+    if geo.get_layer(workspace=workspaceName, layer_name=pgTableName)\
+    == "get_layer error: Expecting value: line 1 column 1 (char 0)".format(pgTableName, storeName):
         getMessageString('Forecast layer successfully uploaded.')
         geo.publish_featurestore(workspace=workspaceName, store_name=storeName, pg_table=pgTableName)
     else:
         getMessageString("There was an old forecast stored. Let's create an updated layer")
-        geo.delete_layer(layer_name=layerName, workspace=workspaceName)
+        geo.delete_layer(layer_name=pgTableName, workspace=workspaceName)
         geo.publish_featurestore(workspace=workspaceName, store_name=storeName, pg_table=pgTableName)
         
-publishFeatureStore(geoserverCred, 'saprog_meteo', 'meteomap', 'forecast_map', 'last_forecast')
-
-# geo = Geoserver('http://localhost:8080/geoserver', username=geoserverCred.get('username'),\
-# password=geoserverCred.get('password'))
-# print(geo.get_layer(workspace='saprog_meteo', layer_name='last_forecast'))
-        
-
-
-# doc in use : https://geoserver-rest.readthedocs.io/en/latest/how_to_use.html?highlight=geo.get_featurestore#creating-and-publishing-featurestores-and-featurestore-layers
+publishFeatureStore(geoserverCred, workspaceName='saprog_meteo', storeName='meteomap', pgTableName='forecast_map')
 
 
 # %%
 # # Execution time (finish)
-getMessageString("meteo2map executed in %s seconds" % (time.time() - start_time))
+exTime = time.time() - start_time
+getMessageString("meteo2map executed in {} seconds".format(exTime))
