@@ -1,4 +1,6 @@
-# Made by João H. Oliveira (2021), as a project for Software Aberto e Programação em SIG
+# METEO2MAP
+# Made by João H. Oliveira (2021), as final project for Software Aberto e Programação em SIG
+# Licenced under GPLv3
 
 #%%
 import os, sys, urllib.request, json, subprocess, geopandas, pandas,\
