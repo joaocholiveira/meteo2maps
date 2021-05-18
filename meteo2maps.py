@@ -272,7 +272,7 @@ df2PgSQL(conn, meteoDataFrame, 'forecast')
 
 #%%
 
-# Finnaly building the map
+# Finnaly building the map service
 def geoViewExtraction(connectionParameters):
     '''
     Construção de view dentro da BD, respeitante ao último request.
@@ -370,6 +370,6 @@ publishFeatureStore(geoserverCred, workspaceName='saprog_meteo', storeName='mete
 
 
 # %%
-# # Execution time (finish)
+# Execution time (finish)
 exTime = time.time() - start_time
 getMessageString("meteo2map executed in {} seconds".format(exTime))
