@@ -33,9 +33,8 @@ def getMessageString(msg):
     utilizador pela linha de comandos.
     '''
     counter['counter'] += 1
-    counterString = print('\n', str(counter['counter']) + '. ' + msg)
-    return counterString, counter
-
+    print('\n', str(counter['counter']) + '. ' + msg)
+    
 getMessageString('Working on initial steps... Please, wait a moment.')
 
 def outputDir():
@@ -111,7 +110,7 @@ def checkPgGeoTable(connectionParameters, table):
         | psql -q -U postgres -d meteo -h localhost -p 5432'
         os.system(command)
         time.sleep(5)
-        getMessageString('{} table loaded into meteo database.'.format(table))
+        getMessageString('{} table uploaded in meteo database.'.format(table))
     else:
         getMessageString('{} table already exists in meteo database.'.format(table))
 
@@ -127,7 +126,7 @@ def requestType():
     '''
     # Requesting input
     while True:
-        requestType = input('\nSpecify the wanted type of meteomap request (Y for yesterday, N for now, T for tomorrow): ' )
+        requestType = input(getMessageString('Specify the wanted type of meteomap request (Y for yesterday, N for now, T for tomorrow): ' ))
         if not re.match('[YNT]', requestType):
             if requestType == 'exit':
                 sys.exit()
@@ -326,7 +325,7 @@ def initializeGeoserver():
     # To give time to Geoserver startup
     time.sleep(20)
 
-# initializeGeoserver()
+initializeGeoserver()
 
 def checkWorkspace(geoserverCredentials, workspaceName):
     '''
@@ -365,7 +364,7 @@ def createFeatureStore(geoserverCredentials, postgresCredentials, workspaceName,
 
 createFeatureStore(geoserverCred, postgresCred, 'saprog_meteo', 'meteomap')
 
-def publishFeatureStore(geoserverCredentials, workspaceName, storeName, tableName):
+def publishFeatureStore(geoserverCredentials, workspaceName, storeName, layerName, pgTableName):
     '''
     Função para carregamento da view em base de dados para o featurestore.
     Necessita de exista a referida view dentro da base de dados Postgres,
@@ -373,17 +372,17 @@ def publishFeatureStore(geoserverCredentials, workspaceName, storeName, tableNam
     '''
     geo = Geoserver('http://localhost:8080/geoserver', username=geoserverCredentials.get('username'),\
     password=geoserverCredentials.get('password'))
-    if geo.get_layer(workspace=workspaceName, layer_name=tableName)\
-    == "get_layer error: Expecting value: line 1 column 1 (char 0)".format(tableName, storeName):
+    if geo.get_layer(workspace=workspaceName, layer_name=layerName)\
+    == "get_layer error: Expecting value: line 1 column 1 (char 0)".format(layerName, storeName):
         getMessageString('Forecast layer successfully uploaded.')
-        geo.publish_featurestore(workspace=workspaceName, store_name=storeName, pg_table=tableName)
+        geo.publish_featurestore(workspace=workspaceName, store_name=storeName, pg_table=pgTableName)
     else:
         getMessageString("There was an old forecast stored. Let's create an updated layer")
-        geo.delete_layer(layer_name=tableName, workspace=workspaceName)
-        geo.publish_featurestore(workspace=workspaceName, store_name=storeName, pg_table=tableName)
+        geo.delete_layer(layer_name=layerName, workspace=workspaceName)
+        geo.publish_featurestore(workspace=workspaceName, store_name=storeName, pg_table=pgTableName)
         
 
-publishFeatureStore(geoserverCred, 'saprog_meteo', 'meteomap', 'last_forecast')
+publishFeatureStore(geoserverCred, 'saprog_meteo', 'meteomap', 'forecast_map', 'last_forecast')
 
 # geo = Geoserver('http://localhost:8080/geoserver', username=geoserverCred.get('username'),\
 # password=geoserverCred.get('password'))
