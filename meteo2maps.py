@@ -7,8 +7,8 @@
 
 #%%
 
-import os, sys, urllib.request, json, subprocess, geopandas, pandas,\
-shutil, psycopg2, re, requests, time, warnings, webbrowser
+import os, sys, urllib.request, json, geopandas, pandas,\
+psycopg2, re, time, warnings
 from datetime import datetime, timedelta
 from psycopg2 import extras as psy2extras
 from geo.Geoserver import Geoserver
@@ -309,8 +309,9 @@ def initializeGeoserver():
     '''
     getMessageString('Starting Geoserver. Please, wait a moment.')
     # Geoserver starting in a new command line
-    cmd = 'start C:\\"Program Files"\\geoserver\\bin\\startup.bat'
-    subprocess.Popen(cmd, shell=True)
+    # cmd = 'start C:\\"Program Files"\\geoserver\\bin\\startup.bat'
+    # subprocess.Popen(cmd, shell=True)
+    os.system('start C:\\"Program Files"\\geoserver\\bin\\startup.bat')
     # To give time to Geoserver startup correctly
     time.sleep(20)
 
