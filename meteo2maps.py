@@ -1,16 +1,17 @@
 # METEO2MAP
 # Made by João H. Oliveira (2021), as final project for Software Aberto e Programação em SIG
+
 # Licenced under GPLv3
+# camelCase style adopted
+# #%% Stands for VSC interactive execution directly on .py, like .ipnby Jupyter Notebooks
 
 #%%
+
 import os, sys, urllib.request, json, subprocess, geopandas, pandas,\
 shutil, psycopg2, re, requests, time, warnings, webbrowser
 from datetime import datetime, timedelta
 from psycopg2 import extras as psy2extras
 from geo.Geoserver import Geoserver
-
-#%%
-# camelCase style adopted
 
 # Execution time (start)
 start_time = time.time()
@@ -23,7 +24,7 @@ basePath = 'C:\\saprog\\projeto'
 outputPath = 'C:\\saprog\\projeto\\output\\'
 os.chdir(basePath)
 
-# Counter support for getMessageString
+# Counter support variable for getMessageString
 global counter
 counter = {'counter': 0}
 
@@ -84,10 +85,10 @@ def getCoordTogether(geoDataFrame):
         coordDic[i] = tuple(coordDic[i] for coordDic in coord)
     return coordDic
 
-coord = getCoordTogether(districts)
-getMessageString('District coordinates compiled.')
+coordDist = getCoordTogether(districts)
+getMessageString('Districts centroid coordinates compiled.')
 
-#%%
+ #%%
 
 # Check the existence of districts table in meteo PG database
 # Reading hidden PostgreSQL password from txt file in dir
@@ -98,7 +99,7 @@ pgPassword = str(pgPassword)
 conn = psycopg2.connect(dbname='meteo', user='postgres', password=pgPassword,\
 host='localhost', port='5432')
 
-def checkPgGeoTable(connectionParameters, table):
+def checkPgDistrictsTable(connectionParameters, table):
     '''
     Função para verificação de boleana de tabela geográfica dentro de BD PostgreSQL.
     Carrrega shapefile se a tabela não existir na BD.
@@ -107,7 +108,7 @@ def checkPgGeoTable(connectionParameters, table):
     cur.execute("select * from information_schema.tables where table_name=%s", (table,))
     # Checking for existence of districts table
     if bool(cur.rowcount) == False:
-    # Creating forecast table in databaase
+    # Uploading districts sgapefile in database
         command = 'shp2pgsql -s 3763 C:\\saprog\\projeto\\output\\districtsetrs.shp public.districtsetrs\
         | psql -q -U postgres -d meteo -h localhost -p 5432'
         os.system(command)
@@ -116,7 +117,32 @@ def checkPgGeoTable(connectionParameters, table):
     else:
         getMessageString('{} table already exists in meteo database.'.format(table))
 
-checkPgGeoTable(conn, 'districtsetrs')
+# Checking for existence of forecast table
+def checkPgForecastTable(connectionParameters, table):
+    '''
+    Função para verificação de presença/ausência de tabela dentro de BD PostgreSQL.
+    Devolve True se existir; False se não existir.
+    '''
+    cur = connectionParameters.cursor()
+    cur.execute("select * from information_schema.tables where table_name=%s", (table,))
+    # Checking for existence of districts table
+    if bool(cur.rowcount) == False:
+        query  = "CREATE TABLE forecast(\
+        forecast_id SERIAL, distrito VARCHAR(80), forecast_date DATE, forecast_time TIME, weather_desc VARCHAR(80),\
+        temperature FLOAT, feels_like FLOAT, pressure INT, humidity INT, dew_point FLOAT, wind_speed FLOAT, wind_deg INT,\
+        request_type VARCHAR(80), CONSTRAINT forecast_pkey PRIMARY KEY (forecast_id))"
+        cur.execute(query)
+        conn.commit()
+        cur.close()
+        getMessageString('{} table created into meteo database.'.format(table))
+    else:
+        getMessageString('{} table already exists in meteo database.'.format(table))
+
+# Checking for districts table
+checkPgDistrictsTable(conn, 'districtsetrs')
+
+# Checking for forecast table
+checkPgForecastTable(conn, 'forecast')
 
 #%%
 
@@ -124,7 +150,7 @@ checkPgGeoTable(conn, 'districtsetrs')
 def requestType():
     '''
     Especificação do momento da previsão meteorológica. Exige um input ao user fo tipo str().
-    Devolve str() que identifica o momento da previsão meteorológica equerida.
+    Devolve str() que identifica o momento da previsão meteorológica requerida.
     '''
     # Requesting input
     while True:
@@ -145,26 +171,29 @@ def harvestOWM(coordDic, apiKey, requestType):
     Devolve uma dataframe (pandas) com os princiapis parâmetros meteorológicos para cada distrito.
     '''
     forecast = []
-    for item in coord.items():
+    for item in coordDic.items():
         lat = str(item[1][1])
         long = str(item[1][0])
         # For yesterday's weather
         if requestType == 'Y':
             yesterday = datetime.now() - timedelta(days=1)
             unixTimestamp = int(yesterday.timestamp())
-            url = 'https://api.openweathermap.org/data/2.5/onecall/timemachine?lat={}&lon={}&dt={}&appid={}&units=metric'\
-            .format(lat, long, unixTimestamp, apiKey)
-            # example http://api.openweathermap.org/data/2.5/onecall/timemachine?lat=60.99&lon=30.9&dt=1616943972&appid=44cfad7f82ec61d3f422de3201b703d4
+            url = 'https://api.openweathermap.org/data/2.5/onecall/timemachine?'+\
+			'lat={}&lon={}&dt={}&appid={}&units=metric'.format(lat, long, unixTimestamp, apiKey)
+            # example http://api.openweathermap.org/data/2.5/onecall/timemachine?
+			# \lat=60.99&lon=30.9&dt=1616943972&appid=44cfad7f82ec61d3f422de3201b703d4
         # For current weather
         elif requestType == 'N':
-            url = 'https://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&exclude=minutely,hourly,daily,alerts&appid={}&units=metric'\
-            .format(lat, long, apiKey)
-            # example https://api.openweathermap.org/data/2.5/onecall?lat=33.441792&lon=-94.037689&exclude=minutely,hourly,daily,alerts&appid=44cfad7f82ec61d3f422de3201b703d4
+            url = 'https://api.openweathermap.org/data/2.5/onecall?'+\
+            'lat={}&lon={}&exclude=minutely,hourly,daily,alerts&appid={}&units=metric'.format(lat, long, apiKey)
+            # example https://api.openweathermap.org/data/2.5/onecall?\
+			# lat=33.441792&lon=-94.037689&exclude=minutely,hourly,daily,alerts&appid=44cfad7f82ec61d3f422de3201b703d4
         # For tomorrow's weather
         elif requestType == 'T':
-            url = 'https://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&exclude=current,minutly,hourly,alerts&appid={}&units=metric'\
-            .format(lat, long, apiKey)
-            # example https://api.openweathermap.org/data/2.5/onecall?lat=33.441792&lon=-94.037689&exclude=current,minutly,hourly,alerts&appid=44cfad7f82ec61d3f422de3201b703d4
+            url = 'https://api.openweathermap.org/data/2.5/onecall?'+\
+            'lat={}&lon={}&exclude=current,minutly,hourly,alerts&appid={}&units=metric'.format(lat, long, apiKey)
+            # example https://api.openweathermap.org/data/2.5/onecall?\
+			# lat=33.441792&lon=-94.037689&exclude=current,minutly,hourly,alerts&appid=44cfad7f82ec61d3f422de3201b703d4
         with urllib.request.urlopen(url) as url:
             data = json.loads(url.read().decode())
             if requestType == 'T':
@@ -208,41 +237,6 @@ def harvestOWM(coordDic, apiKey, requestType):
     forecast_df = pandas.DataFrame(forecast)
     return forecast_df
 
-# Reading hidden Open Weather Map API key from txt file
-apiKey = open(os.path.join('apikey.txt'), 'r').readline()
-apiKey = str(apiKey)
-
-# Requesting type of meteo ((Y)esterday, (N)ow or (T)omorrow)
-request = requestType()
-getMessageString('Your request has been successfully validated.')
-
-# Havesting data from Open Weather Map
-meteoDataFrame = harvestOWM(coord, apiKey, request)
-getMessageString('Meteorological data has been successfully harvested.')
-
-#%%
-
-# Checking for existence of forecast table
-def checkPgTable(connectionParameters, table):
-    '''
-    Função para verificação de presença/ausência de tabela dentro de BD PostgreSQL.
-    Devolve True se existir; False se não existir.
-    '''
-    cur = connectionParameters.cursor()
-    cur.execute("select * from information_schema.tables where table_name=%s", (table,))
-    # Checking for existence of districts table
-    if bool(cur.rowcount) == False:
-        query  = "CREATE TABLE forecast(\
-        forecast_id SERIAL, distrito VARCHAR(80), forecast_date DATE, forecast_time TIME, weather_desc VARCHAR(80),\
-        temperature FLOAT, feels_like FLOAT, pressure INT, humidity INT, dew_point FLOAT, wind_speed FLOAT, wind_deg INT,\
-        request_type VARCHAR(80), CONSTRAINT forecast_pkey PRIMARY KEY (forecast_id))"
-        cur.execute(query)
-        conn.commit()
-        cur.close()
-        getMessageString('{} table created into meteo database.'.format(table))
-    else:
-        getMessageString('{} table already exists in meteo database.'.format(table))
-
 def df2PgSQL(connectionParameters, dataFrame, table):
     '''
     Utilização da função psycopg2.extras.execute_values()
@@ -266,13 +260,20 @@ def df2PgSQL(connectionParameters, dataFrame, table):
     getMessageString('Meteorological data has been successfully loaded into DB.')
     cur.close()
 
-# Checking for forecast table
-checkPgTable(conn, 'forecast')
+# Reading hidden Open Weather Map API key from txt file
+apiKey = open(os.path.join('apikey.txt'), 'r').readline()
+apiKey = str(apiKey)
+
+# Requesting type of meteo ((Y)esterday, (N)ow or (T)omorrow)
+request = requestType()
+getMessageString('Your request has been successfully validated.')
+
+# Havesting data from Open Weather Map
+meteoDataFrame = harvestOWM(coordDist, apiKey, request)
+getMessageString('Meteorological data has been successfully harvested.')
 
 # Loading meteorological dataframe into DB
 df2PgSQL(conn, meteoDataFrame, 'forecast')
-
-#%%
 
 # Finnaly building the map service
 def geoViewExtraction(connectionParameters):
@@ -294,7 +295,8 @@ def geoViewExtraction(connectionParameters):
 
 geoViewExtraction(conn)
 
-# Geoserver loading
+#%%
+
 # Reading hidden Geoserver password from txt file in dir
 gsPassword = open(os.path.join('geoserverPw.txt'), 'r').readline()
 gsPassword = str(gsPassword)
@@ -309,10 +311,10 @@ def initializeGeoserver():
     # Geoserver starting in a new command line
     cmd = 'start C:\\"Program Files"\\geoserver\\bin\\startup.bat'
     subprocess.Popen(cmd, shell=True)
-    # To give time to Geoserver startup
+    # To give time to Geoserver startup correctly
     time.sleep(20)
 
-# initializeGeoserver()
+initializeGeoserver()
 
 def checkWorkspace(geoserverCredentials, workspaceName):
     '''
@@ -361,10 +363,10 @@ def publishFeatureStore(geoserverCredentials, workspaceName, storeName, pgTableN
     password=geoserverCredentials.get('password'))
     if geo.get_layer(workspace=workspaceName, layer_name=pgTableName)\
     == "get_layer error: Expecting value: line 1 column 1 (char 0)".format(pgTableName, storeName):
-        getMessageString('Forecast layer successfully uploaded.')
+        getMessageString('Forecast WMS successfully uploaded.')
         geo.publish_featurestore(workspace=workspaceName, store_name=storeName, pg_table=pgTableName)
     else:
-        getMessageString("There was an old forecast stored. Let's create an updated layer")
+        getMessageString("There was an old forecast WMS stored. Let's overwrite it.")
         geo.delete_layer(layer_name=pgTableName, workspace=workspaceName)
         geo.publish_featurestore(workspace=workspaceName, store_name=storeName, pg_table=pgTableName)
         
@@ -375,3 +377,5 @@ publishFeatureStore(geoserverCred, workspaceName='saprog_meteo', storeName='mete
 # Execution time (finish)
 exTime = time.time() - start_time
 getMessageString("meteo2map executed in {} seconds".format(exTime))
+
+# End of METEO2MAP script
