@@ -3,7 +3,7 @@
 
 # Licenced under GPLv3
 # camelCase style adopted
-# #%% Stands for VSC interactive execution directly on .py, like .ipnby Jupyter Notebooks
+# #%% Stands for VSC interactive execution directly on .py, like .ipynb Jupyter Notebooks
 
 #%%
 
@@ -181,19 +181,19 @@ def harvestOWM(coordDic, apiKey, requestType):
             url = 'https://api.openweathermap.org/data/2.5/onecall/timemachine?'+\
 			'lat={}&lon={}&dt={}&appid={}&units=metric'.format(lat, long, unixTimestamp, apiKey)
             # example http://api.openweathermap.org/data/2.5/onecall/timemachine?
-			# \lat=60.99&lon=30.9&dt=1616943972&appid=44cfad7f82ec61d3f422de3201b703d4
+			# \lat=60.99&lon=30.9&dt=1616943972&appid=44cfad7f82ec61d3f522de3201b703d4
         # For current weather
         elif requestType == 'N':
             url = 'https://api.openweathermap.org/data/2.5/onecall?'+\
             'lat={}&lon={}&exclude=minutely,hourly,daily,alerts&appid={}&units=metric'.format(lat, long, apiKey)
             # example https://api.openweathermap.org/data/2.5/onecall?\
-			# lat=33.441792&lon=-94.037689&exclude=minutely,hourly,daily,alerts&appid=44cfad7f82ec61d3f422de3201b703d4
+			# lat=33.441792&lon=-94.037689&exclude=minutely,hourly,daily,alerts&appid=44cfad7f82ec61d3f522de3201b703d4
         # For tomorrow's weather
         elif requestType == 'T':
             url = 'https://api.openweathermap.org/data/2.5/onecall?'+\
             'lat={}&lon={}&exclude=current,minutly,hourly,alerts&appid={}&units=metric'.format(lat, long, apiKey)
             # example https://api.openweathermap.org/data/2.5/onecall?\
-			# lat=33.441792&lon=-94.037689&exclude=current,minutly,hourly,alerts&appid=44cfad7f82ec61d3f422de3201b703d4
+			# lat=33.441792&lon=-94.037689&exclude=current,minutly,hourly,alerts&appid=44cfad7f82ec61d3f522de3201b703d4
         with urllib.request.urlopen(url) as url:
             data = json.loads(url.read().decode())
             if requestType == 'T':
