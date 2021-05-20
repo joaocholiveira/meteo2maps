@@ -3,7 +3,7 @@
 
 # Licenced under GPLv3
 # camelCase style adopted
-# #%% Stands for VSC interactive execution directly on .py, like .ipynb Jupyter Notebooks
+# #%% Stands for VSC interactive execution directly on .py, like a .ipynb
 
 #%%
 
@@ -59,7 +59,7 @@ if os.path.exists(outputPath+'districts.shp') == False:
     # Executing dissolve from parishes to districts
     districts = caop.dissolve(by = 'Distrito')
     districtsEtrs = districts.to_crs(3763)
-    # Saving dissolve output as shapefile (WGS and) and reading it
+    # Saving dissolve output as shapefile (WGS) and reading it
     districts.to_file(outputPath+'districts.shp', encoding='utf-8')
     districtsEtrs.to_file(outputPath+'districtsetrs.shp', encoding='utf-8')
     districts = geopandas.read_file(outputPath+'districts.shp', encoding='utf-8')
@@ -357,7 +357,7 @@ createFeatureStore(geoserverCred, postgresCred, 'saprog_meteo', 'meteomap')
 def publishFeatureStore(geoserverCredentials, workspaceName, storeName, pgTableName):
     '''
     Função para carregamento da view em base de dados para o featurestore.
-    Necessita de exista a referida view dentro da base de dados Postgres,
+    Necessita que exista a referida view dentro da base de dados Postgres,
     e do workspace e featurestore definida dentro do Geoserver.
     '''
     geo = Geoserver('http://localhost:8080/geoserver', username=geoserverCredentials.get('username'),\
