@@ -1,7 +1,7 @@
 # METEO2MAP
 # Made by João H. Oliveira (2021), as final project for Software Aberto e Programação em SIG
 
-# Licenced under GPLv3
+# Licensed under GPLv3
 # camelCase style adopted
 # #%% Stands for VSC interactive execution directly on .py, like a .ipynb
 
